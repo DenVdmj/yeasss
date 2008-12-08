@@ -194,10 +194,14 @@ be used for other loops.
 /* from w3.org: "an E element, last child of its parent" */
 														case 'last-child':
 															var brother = child.parentNode.lastChild;
-/* llop in lastChilds while nodeType isn't element */
-															while (brother.nodeType != 1) {
-																brother = brother.nextSibling;
+/* pre-check. Will be true if most normal cases */
+															if (brother === child) {
+																flag = 0;
 															}
+/* loop in lastChilds while nodeType isn't element */
+															while ((brother = brother.previousSibling) && brother.nodeType != 1) {
+															}
+/* post check. Maybe true in some cases */
 															if (brother === child) {
 																flag = 0;
 															}
