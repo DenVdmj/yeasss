@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-07 20:30:09 +3000 (Sun, 7 Dec 2008) $
-* $Rev: 125 $
+* $Date: 2008-12-00 00:12:10 +3000 (Tue, 9 Dec 2008) $
+* $Rev: 129 $
 */
 var _ = function () {
 /* given CSS selector, first argument */
@@ -193,8 +193,12 @@ be used for other loops.
 															break;
 /* from w3.org: "an E element, last child of its parent" */
 														case 'last-child':
-															var brothers = child.parentNode.getElementsByTagName('*');
-															if (brothers[brothers.length - 1] === child) {
+															var brother = child.parentNode.lastChild;
+/* llop in lastChilds while nodeType isn't element */
+															while (brother.nodeType != 1) {
+																brother = brother.nextSibling;
+															}
+															if (brother === child) {
 																flag = 0;
 															}
 															break;
