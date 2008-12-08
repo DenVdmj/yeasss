@@ -91,7 +91,7 @@ http://ejohn.org/blog/search-and-dont-replace/
 http://webo.in/articles/habrahabr/40-search-not-replace/
 thx to GreLI for 'greed' RegExp
 */
-							single.replace(/([^\[\:\.#]+)?(?:#([^\[\:\.#]+))?(?:\.([^\[\:\.#]+))?(?:\[([^\[\:\.#]+)=['"]([^\[\:\.#]+)['"])?(?:\:([^\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/, function(a, tag, id, klass, attr, value, modificator, ind) {
+							single.replace(/([^\[\:\.#]+)?(?:#([^\[\:\.#]+))?(?:\.([^\[\:\.#]+))?(?:\[([^\[\:\.#]+)=([^\[\:\.#]+)\])?(?:\:([^\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/, function(a, tag, id, klass, attr, value, modificator, ind) {
 /*
 switch to quick select for the root node.
 There won't be any duplicates as far as it's the first level
@@ -174,39 +174,43 @@ check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID.
 */
-												if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] === value) || (attr === 'class' && child.className.match(value)) ) && !child.yeasss) {
+												 if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] === value) || (attr === 'class' && child.className.match(value))) && !child.yeasss) {
 /*
 CSS2/3 modificatos. Specification taken from
 http://www.w3.org/TR/2005/WD-css3-selectors-20051215/
-in success just null the modifcator -- this will be equal to
-the ordinary case
+in success just null the flag -- this will be equal to
+the ordinary case. Don't null a modificator -- it can
+be used for other loops.
 */
-													switch (modificator) {
-/* from w3.org: " 	an E element, first child of its parent" */
+													var flag = modificator;
+													switch (flag) {
+/* from w3.org: "an E element, first child of its parent" */
 														case 'first-child':
 /* implementation was taken from jQuery.1.2.6, line 1394 */
 															if (child.parentNode.getElementsByTagName('*')[0] === child) {
-																modificator = 0;
+																flag = 0;
 															}
-															h = childs.length;
 															break;
-/* from w3.org: " 	an E element, last child of its parent" */
+/* from w3.org: "an E element, last child of its parent" */
 														case 'last-child':
 															var brothers = child.parentNode.getElementsByTagName('*');
-															if (brothers[brothers.length - 1] !== child) {
-																modificator = 0;
+															if (brothers[brothers.length - 1] === child) {
+																flag = 0;
 															}
 															break;
 /* from w3.org: "an E element, root of the document" */
 														case 'root':
 															if (child.nodeName.toLowerCase() === 'html') {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
-/* from w3.org: "an E element, the n-th child of its parent" */
+/*
+from w3.org: "an E element, the n-th child of its parent"
+Completely wrong at this moment. Need to support at least: n, 2n, 2n+1
+*/
 														case 'nth-child':
 															if (ind > -1 && child.parentNode.getElementsByTagName('*')[ind] === child) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 /*
@@ -216,19 +220,19 @@ counting from the last one"
 														case 'nth-last-child':
 															var brothers = child.parentNode.getElementsByTagName('*');
 															if (ind > -1 && brothers[brothers.length - 1 - ind] === child) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 /* from w3.org: "an E element that has no children (including text nodes)" */
 														case 'empty':
 															if (!child.hasChildNodes()) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 /* from w3.org: "an E element, only child of its parent" */
 														case 'only-child':
 															if (child.parentNode.getElementsByTagName('*').length == 1) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 /*
@@ -237,7 +241,7 @@ from w3.org: "a user interface element E which is checked
 */
 														case 'checked':
 															if (child.nodeName.toLowerCase() === 'input' && (child.type === 'checkbox' || child.type === 'radio') && child.checked) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 /*
@@ -246,7 +250,7 @@ from w3.org: "an element of type E in language "fr"
 */
 														case 'lang':
 															if (child.lang === ind || doc.getElementsByTagName('html')[0].lang === ind) {
-																modificator = 0;
+																flag = 0;
 															}
 															break;
 													}
@@ -254,7 +258,7 @@ from w3.org: "an element of type E in language "fr"
 modificator is either not set in the selector,
 or just has been nulled by previous switch
 */
-													if (!modificator) {
+													if (!flag) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
