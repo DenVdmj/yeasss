@@ -1,17 +1,17 @@
 (function(){
 /*
-* YASS 0.2.2 - The fastest CSS selectors JavaScript library
+* YASS 0.2.3 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-09 23:00:11 +3000 (Tue, 9 Dec 2008) $
-* $Rev: 173 $
+* $Date: 2008-12-11 13:28:11 +3000 (Tue, 11 Dec 2008) $
+* $Rev: 187 $
 */
 var _ = function () {
-/* given CSS selector, first argument, fast trim */
-	var selector = arguments[0].replace(/^\s+|\s+$/g, "");
+	/* given CSS selector, first argument, fast trim eats about 0.2ms */
+	var selector = arguments[0];
 /* return cache if exists. Third argument */
 	if (_.cache[selector] && !arguments[2]) {
 		return _.cache[selector];
@@ -24,7 +24,7 @@ var _ = function () {
 Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-			if (root.querySelectorAll) {
+			if (_.doc.querySelectorAll) {
 				_.sets = root.querySelectorAll(selector);
 			} else {
 /* number of groups to merge or not result arrays */
@@ -35,13 +35,18 @@ Split by RegExp, thx to tenshi.
 */
 					groups = selector.split(/,\s*/),
 					group;
+/* current set of nodes, to handle single selectors */
+				_.sets = null;
 				while (group = groups[groups_length++]) {
 /* split selectors by space -- to form single group tag-id-class */
 					var singles = group.split(/\s+/),
 						singles_length = singles.length,
 						single,
 						i = 0;
-/* clean nodes with DOM root */
+/*
+current sets of nodes, to handle comma-separated selectors.
+Clean them with DOM root
+*/
 					_.nodes = root;
 					while (single = singles[i++]) {
 /*
@@ -98,7 +103,7 @@ Then mark selected element with expando
 								}
 							}
 /* put selected nodes in local nodes' set */
-							_.nodes = newNodes && newNodes.length ? newNodes : null;
+							_.nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
 						});
 					}
 /* inialize sets with nodes */		
@@ -112,9 +117,13 @@ Then mark selected element with expando
 						while (node = _.nodes[K++]) {
 							_.sets[idx++] = node;
 						}
+/* handle case with the only element in nodes */
+						if (K == 1 && _.nodes) {
+							_.sets[idx++] = _.nodes;
+						}
 					}
 				}
-				var idx = _.sets ? _.sets.length : 0;
+				var idx = _.sets ? _.sets.length || (_.sets.yeasss = null) : 0;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to non-default case
@@ -124,12 +133,8 @@ that must be nulled. Need this only to non-default case
 				}
 			}
 		}
-/* save result in cache */
-		_.cache[selector] = _.sets ? _.sets.length || _.sets.nodeName ? _.sets : null : null;
-/* clear all properties to prevent memory leaks */
-		_.sets = _.nodes = null;
-/* return result */
-		return _.cache[selector];
+/* return and cache results */
+		return _.cache[selector] = _.sets;
 	}
 };
 /* current set of nodes, to handle single selectors */
@@ -146,8 +151,8 @@ first case: don't need additional checks
 */
 _.simple = {
 	'#':
-		function (selector) {
-			var id = selector.slice(1),
+		function () {
+			var id = arguments[0].slice(1),
 				nodes = _.doc.getElementById(id);
 /*
 workaround with IE bug about returning element by name not by ID.
@@ -175,20 +180,22 @@ if we have the only element -- it's already in nodes.
 			return nodes;
 		},
 	'.':
-		function (selector, root) {
-			if (root.getElementsByClassName) {
-				return root.getElementsByClassName(selector.slice(1));
+		function () {
+			if (_.doc.getElementsByClassName) {
+				var nodes = arguments[1].getElementsByClassName(arguments[0].slice(1));
+				return nodes.length == 1 ? nodes[0] : nodes;
 			}
 			return null;
 		},
 	'%':
-		function (selector, root) {
-			return root.getElementsByTagName(selector);
+		function () {
+			var nodes = arguments[1].getElementsByTagName(arguments[0])
+			return nodes.length == 1 ? nodes[0] : nodes;
 		},
 	'[':
-		function (selector, root) {},
+		function () {},
 	':':
-		function (selector, root) {}
+		function () {}
 };
 /*
 function calls for CSS2/3 modificatos. Specification taken from
@@ -266,7 +273,7 @@ from w3.org: "an element of type E in language "fr"
 */
 	'lang':
 		function (child, ind) {
-			return (child.lang !== ind && document.getElementsByTagName('html')[0].lang !== ind);
+			return (child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind);
 		}
 };
 /* initialization as a global var */
