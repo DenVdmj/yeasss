@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<ul>
+	<li>
+	<a class="link green" href="#">Link</a>
+	<a class="link green" href="#">Link</a>
+	<a class="link green" href="#">Link</a>
+	</li>
+	<li>
+	<a class="link green" href="#">Link</a>
+	<a class="link green" href="#">Link</a>
+	</li>
+	<li><a class="link green" href="#">Link</a></li>
+</ul>
+<pre><code><font size="2" face="Courier New" color="black">window.onload = <font color="#0000ff">function</font>(){
+&nbsp;&nbsp;<font color="#008000">//Set Gren color all .green</font>
+&nbsp;&nbsp;<font color="#0000ff">for</font> each (<font color="#0000ff">var</font> el <font color="#0000ff">in</font> _(<font color="#A31515">'a.link.green'</font>)) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;el.style.color = <font color="#A31515">'green'</font>
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<font color="#008000">//Set Red color all first elements on li a.links</font>
+&nbsp;&nbsp;<font color="#0000ff">for</font> each (<font color="#0000ff">var</font> el <font color="#0000ff">in</font> _(<font color="#A31515">'li *:first-child'</font>)) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;el.style.color = <font color="#A31515">'red'</font>
+&nbsp;&nbsp;}
+&nbsp;&nbsp;<font color="#008000">//Set Red color first element on ul li a.links</font>
+&nbsp;&nbsp;_(<font color="#A31515">'li a.link:first-child'</font>)[0].style.color = <font color="#A31515">'blue'</font>
+}</font>
+</code></pre>
+<script type="text/javascript" src="../src/yass.js"></script>
+<script type="text/javascript">
+	window.onload = function(){
+		for each (var el in _('a.link.green')) {
+		  	el.style.color = 'green'
+		}
+		for each (var el in _('li *:first-child')) {
+		  	el.style.color = 'red'
+		}
+		_('li a.link:first-child')[0].style.color = 'blue'
+	}
+</script>
+</body>
+</html>
