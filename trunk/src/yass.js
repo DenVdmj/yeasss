@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-11 19:13:13 +3000 (Tue, 11 Dec 2008) $
-* $Rev: 196 $
+* $Date: 2008-12-13 19:13:13 +3000 (Tue, 11 Dec 2008) $
+* $Rev: 197 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -272,6 +272,16 @@ from w3.org: "an element of type E in language "fr"
 			return (child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind);
 		}
 };
+/*
+clean cache on DOM changes.
+Code copied from Sizzle (thx, John), rev. 2008-12-05, line 13
+*/
+if ( _.doc.addEventListener && !_.doc.querySelectorAll ) {
+  function invalidate(){ _.cache = {}; }
+  _.doc.addEventListener("DOMAttrModified", invalidate, false);
+  _.doc.addEventListener("DOMNodeInserted", invalidate, false);
+  _.doc.addEventListener("DOMNodeRemoved", invalidate, false);
+}
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
