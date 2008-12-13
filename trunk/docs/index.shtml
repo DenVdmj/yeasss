@@ -23,8 +23,8 @@
 <li><code>:empty</code> content emtpy selector,</li>
 <li><code>:root</code> selector for <code>HTML</code> element,</li>
 <li><code>:checked</code> pseudo selector for checked checkboxes or radio buttons,</li>
-<li>:nth-child(3)</li> style positional calculations,</li>
-<li>:lang</li> pseudo selector.</li>
+<li><code>:nth-child(3)</code> style positional calculations,</li>
+<li><code>:lang</code> pseudo selector.</li>
 </ul>
 
 <p>Any legal combination of these selectors will work with _(), including compound selectors ("," delimited). Returned value is either a DOM element or an array of such elements. If there is no element for given selector YASS will return <code>null</code>.</p>
