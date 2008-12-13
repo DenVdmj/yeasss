@@ -7,7 +7,7 @@
 * and GPL (GPL-LICENSE.txt) licenses.
 *
 * $Date: 2008-12-13 19:13:13 +3000 (Tue, 11 Dec 2008) $
-* $Rev: 197 $
+* $Rev: 198 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -205,11 +205,11 @@ if we have the only element -- it's already in nodes.
 				node,
 				i = 0,
 				attr = selector.replace(/=.*/,""),
-				value = selector.replace(/=.*/,""),
+				value = selector.replace(/.*=?/,""),
 				newNodes = [],
 				idx = 0;
 			while (node = nodes[i++]) {
-				if (node[attr] === value) {
+				if (value && node[attr] === value) {
 					newNodes[idx++] = node;
 				}
 			}
@@ -222,9 +222,11 @@ if we have the only element -- it's already in nodes.
 				node,
 				i = 0,
 				newNodes = [],
-				idx = 0;
+				idx = 0,
+				ind = selector.replace(/[^\(]*\(([^\)]*)\)/,"$1"),
+				selector = selector.replace(/\(.*/,"");
 			while (node = nodes[i++]) {
-				if (_.modificator[selector] && !_.modificator[selector](node)) {
+				if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
 					newNodes[idx++] = node;
 				}
 			}
