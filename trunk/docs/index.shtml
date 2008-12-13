@@ -6,6 +6,8 @@
 
 <p>Main selectors function receives 3 params: CSS selector itself, selection root (<code>document</code> by default) and <code>noCache</code> to clean up cache for given selector (the cache will be automatically dropped for modern browrs, but in IE you should set this parameter to select new set of nodes after cnahges in HTML).</p>
 
+<p>More examples are listed in <a href="/tutorials/">tutorials</a> section.</p>
+
 <h3>Supported Selectors:</h3>
 
 <ul>
