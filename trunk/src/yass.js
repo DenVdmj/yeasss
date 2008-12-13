@@ -21,7 +21,7 @@ _.main = function (selector, root) {
 /* current sets of nodes, to handle comma-separated selectors */
 	var sets;
 /* select first letter to fast switch in simple cases */
-	if (!/^.\w+$/.test(selector) || !(sets = _.simple[selector.charAt(0).replace(/[a-zA-Z\*]/,"%")](selector, root))) {
+	if (!/^.\w+$/.test(selector) || !(sets = _.simple[selector.charAt(0).replace(/[^\[:\.#]/,"%")](selector, root))) {
 /*
 all other cases.
 Apply querySelector if exists.
@@ -153,6 +153,7 @@ return some simple cases: only ID or only CLASS for the very
 first case: don't need additional checks
 */
 _.simple = {
+/* return element by ID */
 	'#':
 		function (selector) {
 			var id = selector.slice(1),
@@ -182,6 +183,7 @@ if we have the only element -- it's already in nodes.
 			}
 			return nodes;
 		},
+/* return element by CLASS */
 	'.':
 		function (selector, root) {
 			if (_.doc.getElementsByClassName) {
@@ -190,15 +192,44 @@ if we have the only element -- it's already in nodes.
 			}
 			return null;
 		},
+/* return elements by TAG */
 	'%':
 		function (selector, root) {
-			var nodes = root.getElementsByTagName(selector)
+			var nodes = root.getElementsByTagName(selector);
 			return nodes.length == 1 ? nodes[0] : nodes;
 		},
+/* return elements by ATTR */
 	'[':
-		function () {},
+		function (selector, root) {
+			var nodes = root.getElementsByTagName('*'),
+				node,
+				i = 0,
+				attr = selector.replace(/=.*/,""),
+				value = selector.replace(/=.*/,""),
+				newNodes = [],
+				idx = 0;
+			while (node = nodes[i++]) {
+				if (node[attr] === value) {
+					newNodes[idx++] = node;
+				}
+			}
+			return idx ? idx > 1 ? newNodes : newNodes[0] : null;
+		},
+/* return elements by MODIFICATOR */
 	':':
-		function () {}
+		function (selector, root) {
+			var nodes = root.getElementsByTagName('*'),
+				node,
+				i = 0,
+				newNodes = [],
+				idx = 0;
+			while (node = nodes[i++]) {
+				if (_.modificator[selector] && !_.modificator[selector](node)) {
+					newNodes[idx++] = node;
+				}
+			}
+			return idx ? idx > 1 ? newNodes : newNodes[0] : null;
+		}
 };
 /*
 function calls for CSS2/3 modificatos. Specification taken from
