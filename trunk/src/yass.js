@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-15 00:03:21 +3000 (Mon, 15 Dec 2008) $
-* $Rev: 201 $
+* $Date: 2008-12-15 00:21:22 +3000 (Mon, 15 Dec 2008) $
+* $Rev: 203 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -74,7 +74,7 @@ http://ejohn.org/blog/search-and-dont-replace/
 http://webo.in/articles/habrahabr/40-search-not-replace/
 thx to GreLI for 'greed' RegExp
 */
-			single.replace(/([^\s\[\:\.#]+)?(?:#([^\s\[\:\.#]+))?(?:\.([^\s\[\:\.#]+))?(?:\[([^\s\[\:\.#]+)=([^\s\[\:\.#]+)\])?(?:\:([^\s\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/, function(a, tag, id, klass, attr, value, modificator, ind) {
+			single.replace(/([^\s\[\:\.#]+)?(?:#([^\s\[\:\.#]+))?(?:\.([^\s\[\:\.#]+))?(?:\[([^\s\[\:\.#=]+)=?([^\s\[\:\.#]+)?\])?(?:\:([^\s\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/, function(a, tag, id, klass, attr, value, modificator, ind) {
 /* new nodes array */
 				var newNodes = [],
 /* length of root nodes */
@@ -99,7 +99,7 @@ check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] === value) || (attr === 'class' && child.className.match(value))) && !child.yeasss) {
+						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss) {
 /*
 modificator is either not set in the selector,
 or just has been nulled by previous switch
@@ -216,7 +216,7 @@ if we have the only element -- it's already in nodes.
 				newNodes = [],
 				idx = 0;
 			while (node = nodes[i++]) {
-				if (value && node[attr] === value) {
+				if (value && attr && (!value || node[attr] === value)) {
 					newNodes[idx++] = node;
 				}
 			}
