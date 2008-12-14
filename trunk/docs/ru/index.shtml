@@ -44,7 +44,7 @@
 <li><code>[class^=block]</code> &mdash; значение атрибута, начинающееся с заданного значения,</li>
 <li><code>[class$=hidden]</code> &mdash; или заканчивающегося ею,</li>
 <li><code>[alt*=image]</code> &mdash; соответствие подстроки значения атрибута заданной,</li>
-</li></ul>
+</ul></li>
 <li>выбор элементов по заданной позиции через <code>:nth-child(even)</code>, <code>:nth-child(odd)</code>, <code>:nth-child(2n+1)</code>,</li>
 <li>и отрицательный селектор <code>:not(...)</code>ю</li>
 </ul>
