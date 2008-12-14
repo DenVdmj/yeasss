@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.2.5 - The fastest CSS selectors JavaScript library
+* YASS 0.2.6 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-13 19:13:13 +3000 (Tue, 11 Dec 2008) $
-* $Rev: 198 $
+* $Date: 2008-12-15 00:03:21 +3000 (Mon, 15 Dec 2008) $
+* $Rev: 201 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -19,9 +19,12 @@ Return cache if exists. Third argument.
 };
 _.main = function (selector, root) {
 /* current sets of nodes, to handle comma-separated selectors */
-	var sets;
-/* select first letter to fast switch in simple cases */
-	if (!/^.\w+$/.test(selector) || !(sets = _.simple[selector.charAt(0).replace(/[^\[:\.#]/,"%")](selector, root))) {
+	var sets,
+/* first letter for quick switch in simple cases, a bit faster in Fx */
+		firstLetter;
+/* quick return or generic call */
+/* this place need to be refactored to reduce RegExps, but how? */
+	if (!(firstLetter = /^(.)\w+$/.exec(selector)) || !(sets = _.simple[firstLetter[1].replace(/[^\[:\.#]/,"%")](selector, root))) {
 /*
 all other cases.
 Apply querySelector if exists.
@@ -49,6 +52,10 @@ Split by RegExp, thx to tenshi.
 		group,
 /* current sets of nodes, to handle comma-separated selectors */
 		sets = null;
+/*
+this place need to be refactored to reduce looping with one RegExp
+and extend functionality to >,+,~ selectors, but how?
+*/
 	while (group = groups[groups_length++]) {
 /* split selectors by space -- to form single group tag-id-class */
 		var singles = group.split(/\s+/),
@@ -306,10 +313,11 @@ from w3.org: "an element of type E in language "fr"
 		}
 };
 /*
-clean cache on DOM changes.
-Code copied from Sizzle (thx, John), rev. 2008-12-05, line 13
+clean cache on DOM changes. Code copied from Sizzle
+(thx, John), rev. 2008-12-05, line 13. Don't know why
+we should ignore this for Safari, querySelectorAll removed.
 */
-if ( _.doc.addEventListener && !_.doc.querySelectorAll ) {
+if (_.doc.addEventListener) {
   function invalidate(){ _.cache = {}; }
   _.doc.addEventListener("DOMAttrModified", invalidate, false);
   _.doc.addEventListener("DOMNodeInserted", invalidate, false);
