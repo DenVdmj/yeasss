@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-18 15:30:24 +3000 (Thu, 18 Dec 2008) $
-* $Rev: 208 $
+* $Date: 2008-12-18 23:29:25 +3000 (Thu, 18 Dec 2008) $
+* $Rev: 209 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -15,7 +15,7 @@ var _ = function (selector, root, noCache) {
 Subtree added, second argument, thx to tenshi.
 Return cache if exists. Third argument.
 */
-		return _.cache[selector] && !noCache ? _.cache[selector] : _.main(selector, root || _.doc);
+		return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
 };
 _.main = function (selector, root) {
 /* current sets of nodes, to handle comma-separated selectors */
@@ -26,8 +26,7 @@ _.main = function (selector, root) {
 /* this place need to be refactored to reduce RegExps, but how? */
 	if (!(firstLetter = /^(.)\w+$/.exec(selector)) || !(sets = _.simple[firstLetter[1].replace(/[^\[:\.#]/,"%")](selector, root))) {
 /*
-all other cases.
-Apply querySelector if exists.
+all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
 		if (_.doc.querySelectorAll) {
@@ -84,7 +83,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 			if (_.ancestor[single] || !nodes) {
 				ancestor = _.ancestor[children = single];
 			} else {
-				single = /([^\s\[\:\.#]+)?(?:#([^\s\[\:\.#]+))?(?:\.([^\s\[\:\.#]+))?(?:\[([^\s\[\:\.#=]+)=?([^\s\[\:\.#]+)?\])?(?:\:([^\s\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/.exec(single);
+				single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -249,7 +248,7 @@ if we have the only element -- it's already in nodes.
 				i = 0,
 				newNodes = [],
 				idx = 0,
-				ind = selector.replace(/[^\(]*\(([^\)]*)\)/,"$1"),
+				ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
 				selector = selector.replace(/\(.*/,"");
 			while (node = nodes[i++]) {
 				if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
@@ -296,11 +295,11 @@ _.children = {
 			return child.parentNode.getElementsByTagName(tag);
 		},
 	">":
-		function (child, tag){
+		function (child, tag) {
 			return child.getElementsByTagName(tag);
 		},
 	" ":
-		function (child, tag){
+		function (child, tag) {
 			return child.getElementsByTagName(tag);
 		}
 };
@@ -365,7 +364,7 @@ from w3.org: "a user interface element E which is checked
 */
 	'checked':
 		function (child) {
-			return (child.nodeName.toLowerCase() !== 'input' || !(child.type === 'checkbox' || child.type === 'radio') || !child.checked);
+			return !child.checked;
 		},
 /*
 from w3.org: "an element of type E in language "fr"
@@ -374,6 +373,16 @@ from w3.org: "an element of type E in language "fr"
 	'lang':
 		function (child, ind) {
 			return (child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind);
+		},
+/* thx to John, stolen from Sizzle, 2008-12-05, line 398 */
+	'enabled':
+		function (child) {
+			return child.disabled || child.type === "hidden";
+		},
+/* thx to John, stolen from Sizzle, 2008-12-05, line 401 */
+	'disabled':
+		function (child) {
+			return child.disabled;
 		}
 };
 /*
