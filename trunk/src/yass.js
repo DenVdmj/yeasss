@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-15 00:21:22 +3000 (Mon, 15 Dec 2008) $
-* $Rev: 203 $
+* $Date: 2008-12-18 15:30:24 +3000 (Thu, 18 Dec 2008) $
+* $Rev: 208 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -48,7 +48,7 @@ _.generic = function (selector, root) {
 groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
-		groups = selector.split(/,\s*/),
+		groups = selector.split(/ *, */),
 		group,
 /* current sets of nodes, to handle comma-separated selectors */
 		sets = null;
@@ -57,26 +57,47 @@ this place need to be refactored to reduce looping with one RegExp
 and extend functionality to >,+,~ selectors, but how?
 */
 	while (group = groups[groups_length++]) {
-/* split selectors by space -- to form single group tag-id-class */
-		var singles = group.split(/\s+/),
+/*
+Split selectors by space -- to form single group tag-id-class,
+or to get heredity operator.
+*/
+		var singles = group.split(/ *( |>|~|\+) */),
 			singles_length = singles.length,
+/* to handle RegExp for single selector */
 			single,
 			i = 0,
 /*
 current set of nodes, to handle single selectors.
 Clean them with DOM root
 */
-			nodes = root;
-		while (single = singles[i++]) {
+			nodes = root,
+/* to remember heredity for next childs, initialize with " " */
+			ancestor = _.ancestor[" "],
+/* to get correct 'children' for given ancestor selector */
+			children = " ";
 /*
-inspired with John's Resig fast replace implementation, more details:
-http://ejohn.org/blog/search-and-dont-replace/
-http://webo.in/articles/habrahabr/40-search-not-replace/
-thx to GreLI for 'greed' RegExp
+John's Resig fast replace works a bit slower than
+simple exec. Thx to GreLI for 'greed' RegExp
 */
-			single.replace(/([^\s\[\:\.#]+)?(?:#([^\s\[\:\.#]+))?(?:\.([^\s\[\:\.#]+))?(?:\[([^\s\[\:\.#=]+)=?([^\s\[\:\.#]+)?\])?(?:\:([^\s\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/, function(a, tag, id, klass, attr, value, modificator, ind) {
+		while (single = singles[i++]) {
+/* switch ancestor ( , > , ~ , +) */
+			if (_.ancestor[single] || !nodes) {
+				ancestor = _.ancestor[children = single];
+			} else {
+				single = /([^\s\[\:\.#]+)?(?:#([^\s\[\:\.#]+))?(?:\.([^\s\[\:\.#]+))?(?:\[([^\s\[\:\.#=]+)=?([^\s\[\:\.#]+)?\])?(?:\:([^\s\(\[\:\.#]+)(?:\(([^\)]+)\))?)?/.exec(single);
+/* 
+Get all required matches from exec:
+tag, id, class, attribute, value, modificator, index.
+*/
+				var tag = single[1],
+					id = single[2],
+					klass = single[3],
+					attr = single[4],
+					value = single[5],
+					modificator = single[6],
+					ind = single[7],
 /* new nodes array */
-				var newNodes = [],
+					newNodes = [],
 /* length of root nodes */
 					J = 0,
 /* iterator of return array, equals to its length */
@@ -84,43 +105,40 @@ thx to GreLI for 'greed' RegExp
 					node;
 /*
 if root is single -- just make it as an array. Local
-variable is faster.
+variables are faster.
 */
 				nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 				while (node = nodes[J++]) {
 					var h = 0,
 						child,
-/* find all TAGs */
-						childs = node.getElementsByTagName(tag || '*');
+/* find all TAGs or just return all possible neibours */
+						childs = _.children[children || " "](node, tag || '*');
 					while (child = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
+Modificator is either not set in the selector, or just has been nulled
+by previous switch.
+Heredity will return true for simple child-parent relationship.
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss) {
-/*
-modificator is either not set in the selector,
-or just has been nulled by previous switch
-*/
-							if (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
 */
-								if (i == singles_length) {
-									child.yeasss = 1;
-								}
-/* and add to result array */
-								newNodes[idx++] = child;
+							if (i == singles_length) {
+								child.yeasss = 1;
 							}
+/* and add to result array */
+							newNodes[idx++] = child;
 						}
 					}
 				}
 /* put selected nodes in local nodes' set */
 				nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
-			});
+			}
 		}
 /* inialize sets with nodes */
 		sets = sets || nodes;
@@ -211,12 +229,13 @@ if we have the only element -- it's already in nodes.
 			var nodes = root.getElementsByTagName('*'),
 				node,
 				i = 0,
-				attr = selector.replace(/=.*/,""),
-				value = selector.replace(/.*=?/,""),
+				attr = selector.replace(/\[([^=]+)=?.*\]/,"$1"),
+				value = selector.replace(/\[[^=]+(?:=([^\]]+))?\]/,"$1"),
 				newNodes = [],
 				idx = 0;
 			while (node = nodes[i++]) {
-				if (value && attr && (!value || node[attr] === value)) {
+/* check either attr is defined for given node or it's equal to give value */
+				if (node[attr] && (!value || node[attr] === value || (attr === 'class' && node.className.match(value)))) {
 					newNodes[idx++] = node;
 				}
 			}
@@ -238,6 +257,51 @@ if we have the only element -- it's already in nodes.
 				}
 			}
 			return idx ? idx > 1 ? newNodes : newNodes[0] : null;
+		}
+};
+/*
+function calls for CSS2 ancestor modificators.
+Check if current child is correct for given parent / brother.
+*/
+_.ancestor = {
+	"~":
+		function (child, brother) {
+			return brother.parentNode === child.parentNode;
+		},
+	"+":
+		function (child, brother) {
+			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
+			return brother === child;
+		},
+	">":
+		function (child, parent) {
+			return parent === child.parentNode;
+		},
+	" ":
+		function (){
+			return true;
+		}
+};
+/*
+return correct 'children' for given node. They can be
+direct childs, neighbours or something else.
+*/
+_.children = {
+	"~":
+		function (child, tag) {
+			return child.parentNode.getElementsByTagName(tag);
+		},
+	"+":
+		function (child, tag) {
+			return child.parentNode.getElementsByTagName(tag);
+		},
+	">":
+		function (child, tag){
+			return child.getElementsByTagName(tag);
+		},
+	" ":
+		function (child, tag){
+			return child.getElementsByTagName(tag);
 		}
 };
 /*
@@ -293,7 +357,7 @@ counting from the last one"
 /* from w3.org: "an E element, only child of its parent" */
 	'only-child':
 		function (child) {
-			return (child.parentNode.getElementsByTagName('*').length !== 1);
+			return (child.parentNode.getElementsByTagName('*').length != 1);
 		},
 /*
 from w3.org: "a user interface element E which is checked
