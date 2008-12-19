@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.2.6 - The fastest CSS selectors JavaScript library
+* YASS 0.2.7 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-18 23:29:25 +3000 (Thu, 18 Dec 2008) $
-* $Rev: 209 $
+* $Date: 2008-12-19 12:02:26 +3000 (Fri, 19 Dec 2008) $
+* $Rev: 211 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -51,16 +51,14 @@ Split by RegExp, thx to tenshi.
 		group,
 /* current sets of nodes, to handle comma-separated selectors */
 		sets = null;
-/*
-this place need to be refactored to reduce looping with one RegExp
-and extend functionality to >,+,~ selectors, but how?
-*/
+/* loop in groups, maybe the fastest way */
 	while (group = groups[groups_length++]) {
 /*
 Split selectors by space -- to form single group tag-id-class,
-or to get heredity operator.
+or to get heredity operator. Replace + in child modificators
+to % to avoid collisions
 */
-		var singles = group.split(/ *( |>|~|\+) */),
+		var singles = group.replace(/(\([^)]*)\+([^)]*\))/,"$1%$2").split(/ *( |>|~|\+) */),
 			singles_length = singles.length,
 /* to handle RegExp for single selector */
 			single,
@@ -70,7 +68,7 @@ current set of nodes, to handle single selectors.
 Clean them with DOM root
 */
 			nodes = root,
-/* to remember heredity for next childs, initialize with " " */
+/* to remember ancestor call for next childs, initialize with [" "] */
 			ancestor = _.ancestor[" "],
 /* to get correct 'children' for given ancestor selector */
 			children = " ";
@@ -122,7 +120,7 @@ Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Heredity will return true for simple child-parent relationship.
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
+						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind, h) : modificator) && ancestor(child, node))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -263,19 +261,23 @@ function calls for CSS2 ancestor modificators.
 Check if current child is correct for given parent / brother.
 */
 _.ancestor = {
+/* from w3.org: "an F element preceded by an E element" */
 	"~":
 		function (child, brother) {
 			return brother.parentNode === child.parentNode;
 		},
+/* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
 		function (child, brother) {
 			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
 			return brother === child;
 		},
+/* from w3.org: "an F element child of an E element" */
 	">":
 		function (child, parent) {
 			return parent === child.parentNode;
 		},
+/* from w3.org: "an F element descendant of an E element" */
 	" ":
 		function (){
 			return true;
@@ -312,14 +314,12 @@ be used for other loops.
 */
 _.modificators = {
 /* from w3.org: "an E element, first child of its parent" */
-	'first-child':
-		function (child) {
+	'first-child': function (child) {
 /* implementation was taken from jQuery.1.2.6, line 1394 */
 			return child.parentNode.getElementsByTagName('*')[0] !== child;
 		},
 /* from w3.org: "an E element, last child of its parent" */
-	'last-child':
-		function (child) {
+	'last-child': function (child) {
 			var brother = child;
 /* loop in lastChilds while nodeType isn't element */
 			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
@@ -327,63 +327,73 @@ _.modificators = {
 			return !!brother;
 		},
 /* from w3.org: "an E element, root of the document" */
-	'root':
-		function (child) {
+	'root': function (child) {
 			return child.nodeName.toLowerCase() !== 'html';
 		},
 /*
 from w3.org: "an E element, the n-th child of its parent"
-Completely wrong at this moment. Need to support at least: n, 2n, 2n+1
 */
-	'nth-child':
-		function (child, ind) {
+	'nth-child': function (child, ind, n) {
+/* add multiple for short form, % changes to + */
+			ind = eval(ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n"));
 			return ind < 0 || child.parentNode.getElementsByTagName('*')[ind] !== child;
 		},
 /*
 from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
-	'nth-last-child':
-		function (child, ind) {
+	'nth-last-child': function (child, ind, n) {
+/* add multiple for short form, % changes to + */
+			ind = eval(ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n"));
 			var brothers = child.parentNode.getElementsByTagName('*');
 			return ind < 0 || brothers[brothers.length - 1 - ind] !== child;
 		},
-/* from w3.org: "an E element that has no children (including text nodes)" */
-	'empty':
-		function (child) {
-			return child.hasChildNodes(); 
+/*
+Rrom w3.org: "an E element that has no children (including text nodes)".
+Thx to John, from Sizzle, 2008-12-05, line 416
+*/
+	'empty': function (child) {
+			return !!child.firstChild;
+		},
+/* thx to John, stolen from Sizzle, 2008-12-05, line 413 */
+	'parent': function (child) {
+			return !child.firstChild;
 		},
 /* from w3.org: "an E element, only child of its parent" */
-	'only-child':
-		function (child) {
+	'only-child': function (child) {
 			return (child.parentNode.getElementsByTagName('*').length != 1);
 		},
 /*
 from w3.org: "a user interface element E which is checked
 (for instance a radio-button or checkbox)"
 */
-	'checked':
-		function (child) {
+	'checked': function (child) {
 			return !child.checked;
 		},
 /*
 from w3.org: "an element of type E in language "fr"
 (the document language specifies how language is determined)"
 */
-	'lang':
-		function (child, ind) {
+	'lang': function (child, ind) {
 			return (child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind);
 		},
-/* thx to John, stolen from Sizzle, 2008-12-05, line 398 */
-	'enabled':
-		function (child) {
+/* thx to John, from Sizzle, 2008-12-05, line 398 */
+	'enabled': function (child) {
 			return child.disabled || child.type === "hidden";
 		},
-/* thx to John, stolen from Sizzle, 2008-12-05, line 401 */
-	'disabled':
-		function (child) {
-			return child.disabled;
-		}
+/* thx to John, from Sizzle, 2008-12-05, line 401 */
+	'disabled': function (child) {
+			return !child.disabled;
+		},
+/* thx to John, from Sizzle, 2008-12-05, line 407 */
+	'selected': function(elem){
+/*
+Accessing this property makes selected-by-default
+options in Safari work properly.
+*/
+      child.parentNode.selectedIndex;
+      return !child.selected;
+    }
 };
 /*
 clean cache on DOM changes. Code copied from Sizzle
