@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.2.7 - The fastest CSS selectors JavaScript library
+* YASS 0.2.8 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-19 12:02:26 +3000 (Fri, 19 Dec 2008) $
-* $Rev: 211 $
+* $Date: 2008-12-21 00:20:27 +3000 (Sun, 21 Dec 2008) $
+* $Rev: 214 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -120,7 +120,7 @@ Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Heredity will return true for simple child-parent relationship.
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind, h) : modificator) && ancestor(child, node))) {
+						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -308,9 +308,7 @@ _.children = {
 /*
 function calls for CSS2/3 modificatos. Specification taken from
 http://www.w3.org/TR/2005/WD-css3-selectors-20051215/
-in success just null the flag -- this will be equal to
-the ordinary case. Don't null a modificator -- it can
-be used for other loops.
+in success return negative result.
 */
 _.modificators = {
 /* from w3.org: "an E element, first child of its parent" */
@@ -333,20 +331,43 @@ _.modificators = {
 /*
 from w3.org: "an E element, the n-th child of its parent"
 */
-	'nth-child': function (child, ind, n) {
-/* add multiple for short form, % changes to + */
-			ind = eval(ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n"));
-			return ind < 0 || child.parentNode.getElementsByTagName('*')[ind] !== child;
+	'nth-child': function (child, ind) {
+/* check if we need computation */
+			if (/n/.test(ind)) {
+/* add multiplying for short form, % changes to + */
+				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
+				var brothers = child.parentNode.getElementsByTagName('*'),
+					n = brothers.length - 1;
+/* looping in child to find if nth expression is correct */
+				while (n--) {
+					if (brothers[eval(ind)] === child) {
+						return 0;
+					}
+				}
+				return 1;
+			}
+			return child.parentNode.getElementsByTagName('*')[ind] !== child;
 		},
 /*
 from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
-	'nth-last-child': function (child, ind, n) {
-/* add multiple for short form, % changes to + */
-			ind = eval(ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n"));
-			var brothers = child.parentNode.getElementsByTagName('*');
-			return ind < 0 || brothers[brothers.length - 1 - ind] !== child;
+	'nth-last-child': function (child, ind) {
+			var brothers = child.parentNode.getElementsByTagName('*'),
+				n = brothers.length - 1;
+/* check if we need computation */
+			if (/n/.test(ind)) {
+/* add multiplying for short form, % changes to + */
+				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
+/* looping in child to find if nth expression is correct */
+				while (n--) {
+					if (brothers[n - eval(ind)] === child) {
+						return 0;
+					}
+				}
+				return 1;
+			}
+			return brothers[n - ind] !== child;
 		},
 /*
 Rrom w3.org: "an E element that has no children (including text nodes)".
