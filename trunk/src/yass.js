@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-21 22:48:29 +3000 (Sun, 21 Dec 2008) $
-* $Rev: 218 $
+* $Date: 2008-12-21 23:13:30 +3000 (Sun, 21 Dec 2008) $
+* $Rev: 219 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -116,6 +116,7 @@ variables are faster.
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
+Also check for given attribute.
 Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Ancestor will return true for simple child-parent relationship.
@@ -298,7 +299,7 @@ _.children = {
 	"+":
 		function (child, tag) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.tagName.toLowerCase() === tag ? [child] : [];
+			return child && child.tagName.toLowerCase() === tag.toLowerCase() ? [child] : [];
 		},
 	">":
 		function (child, tag) {
