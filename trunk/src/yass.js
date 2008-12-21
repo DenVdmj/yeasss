@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-21 00:20:27 +3000 (Sun, 21 Dec 2008) $
-* $Rev: 214 $
+* $Date: 2008-12-21 22:48:29 +3000 (Sun, 21 Dec 2008) $
+* $Rev: 218 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -118,7 +118,7 @@ to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
 Modificator is either not set in the selector, or just has been nulled
 by previous switch.
-Heredity will return true for simple child-parent relationship.
+Ancestor will return true for simple child-parent relationship.
 */
 						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
 /* 
@@ -266,11 +266,14 @@ _.ancestor = {
 		function (child, brother) {
 			return brother.parentNode === child.parentNode;
 		},
-/* from w3.org: "an F element immediately preceded by an E element" */
+/*
+from w3.org: "an F element immediately preceded by an E element".
+We've already selected right node on the previuos step. Just return
+true.
+*/
 	"+":
-		function (child, brother) {
-			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
-			return brother === child;
+		function () {
+			return true;
 		},
 /* from w3.org: "an F element child of an E element" */
 	">":
@@ -294,7 +297,8 @@ _.children = {
 		},
 	"+":
 		function (child, tag) {
-			return child.parentNode.getElementsByTagName(tag);
+			while ((child = child.nextSibling) && child.nodeType != 1) {}
+			return child && child.tagName.toLowerCase() === tag ? [child] : [];
 		},
 	">":
 		function (child, tag) {
