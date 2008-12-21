@@ -332,6 +332,7 @@ _.modificators = {
 from w3.org: "an E element, the n-th child of its parent"
 */
 	'nth-child': function (child, ind) {
+			ind = ind.replace(/even/,"2n").replace(/odd/,"2n+1");
 /* check if we need computation */
 			if (/n/.test(ind)) {
 /* add multiplying for short form, % changes to + */
@@ -353,6 +354,7 @@ from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
+			ind = ind.replace(/even/,"2n").replace(/odd/,"2n+1");
 			var brothers = child.parentNode.getElementsByTagName('*'),
 				n = brothers.length - 1;
 /* check if we need computation */
