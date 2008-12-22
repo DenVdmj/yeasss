@@ -262,10 +262,13 @@ function calls for CSS2 ancestor modificators.
 Check if current child is correct for given parent / brother.
 */
 _.ancestor = {
-/* from w3.org: "an F element preceded by an E element" */
+/*
+from w3.org: "an F element preceded by an E element". We've
+already selected right node on the previuos step. Just return true.
+*/
 	"~":
-		function (child, brother) {
-			return brother.parentNode === child.parentNode;
+		function () {
+			return true;
 		},
 /*
 from w3.org: "an F element immediately preceded by an E element".
@@ -279,7 +282,7 @@ true.
 /* from w3.org: "an F element child of an E element" */
 	">":
 		function (child, parent) {
-			return parent === child.parentNode;
+			return true;
 		},
 /* from w3.org: "an F element descendant of an E element" */
 	" ":
@@ -294,7 +297,21 @@ direct childs, neighbours or something else.
 _.children = {
 	"~":
 		function (child, tag) {
-			return child.parentNode.getElementsByTagName(tag);
+/* array to return */
+			var nodes = [],
+/* cached length of array */
+				idx = 0;
+			tag = tag.toLowerCase();
+			nodes[idx++] = child = child.parentNode.firstChild;
+/* check if we selected correct node */
+			idx += child.nodeType == 1 && child.nodeName.toLowerCase() === tag ? 0 : -1;
+/* continue with siblings */
+			while (child = child.nextSibling) {
+				if (child.nodeType == 1 && child.nodeName.toLowerCase() === tag) {
+					nodes[idx++] = child;
+				}
+			}
+			return nodes;
 		},
 	"+":
 		function (child, tag) {
@@ -303,7 +320,17 @@ _.children = {
 		},
 	">":
 		function (child, tag) {
-			return child.getElementsByTagName(tag);
+			var nodes = child.getElementsByTagName(tag),
+				i = 0,
+				idx = 0,
+				node,
+				newNodes = [];
+			while (node = nodes[i++]) {
+				if (node.parentNode === child) {
+					newNodes[idx++] = node;
+				}
+			}
+			return newNodes;
 		},
 	" ":
 		function (child, tag) {
