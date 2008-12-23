@@ -6,14 +6,15 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-21 23:13:30 +3000 (Sun, 21 Dec 2008) $
-* $Rev: 219 $
+* $Date: 2008-12-23 10:02:32 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 229 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
 /*
 Subtree added, second argument, thx to tenshi.
 Return cache if exists. Third argument.
+Return not cached result if root specified, thx to 164-572-250
 */
 		return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
 };
@@ -23,11 +24,10 @@ _.main = function (selector, root) {
 /* first letter for quick switch in simple cases, a bit faster in Fx */
 		firstLetter;
 /* quick return or generic call */
-/* this place need to be refactored to reduce RegExps, but how? */
 	if (!(firstLetter = /^(.)\w+$/.exec(selector)) || !(sets = _.simple[firstLetter[1].replace(/[^\[:\.#]/,"%")](selector, root))) {
 /*
 all other cases. Apply querySelector if exists.
-All methods are called via . not [] - thx to arty
+All methods are called via . not [], thx to arty
 */
 		if (_.doc.querySelectorAll) {
 			sets = root.querySelectorAll(selector);
@@ -36,7 +36,7 @@ All methods are called via . not [] - thx to arty
 			sets = _.generic(selector, root);
 		}
 	}
-/* return and cache results */
+/* return and cache results - all in one */
 	return _.cache[selector] = sets;
 };
 /* function to get generic selector */
@@ -54,11 +54,12 @@ Split by RegExp, thx to tenshi.
 /* loop in groups, maybe the fastest way */
 	while (group = groups[groups_length++]) {
 /*
-Split selectors by space -- to form single group tag-id-class,
-or to get heredity operator. Replace + in child modificators
-to % to avoid collisions
+Split selectors by space -- to form single group
+tag-id-class-modificator, or to get heredity operator.
+Replace + in child modificators to % to avoid collisions.
 */
 		var singles = group.replace(/(\([^)]*)\+([^)]*\))/,"$1%$2").split(/ *( |>|~|\+) */),
+/* to add expando only for the last level */
 			singles_length = singles.length,
 /* to handle RegExp for single selector */
 			single,
@@ -68,33 +69,18 @@ current set of nodes, to handle single selectors.
 Clean them with DOM root
 */
 			nodes = root,
-/* to remember ancestor call for next childs, initialize with [" "] */
-			ancestor = _.ancestor[" "],
-/* to get correct 'children' for given ancestor selector */
-			children = " ";
+/* to remember ancestor call for next childs, initialize with " " */
+			ancestor = _.ancestor[" "];
+		while (single = singles[i++]) {
+/* select all children for given ancestor */
+			if (ancestor && nodes) {
 /*
 John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
-		while (single = singles[i++]) {
-/* switch ancestor ( , > , ~ , +) */
-			if (_.ancestor[single] || !nodes) {
-				ancestor = _.ancestor[children = single];
-			} else {
 				single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
-/* 
-Get all required matches from exec:
-tag, id, class, attribute, value, modificator, index.
-*/
-				var tag = single[1],
-					id = single[2],
-					klass = single[3],
-					attr = single[4],
-					value = single[5],
-					modificator = single[6],
-					ind = single[7],
 /* new nodes array */
-					newNodes = [],
+				var newNodes = [],
 /* length of root nodes */
 					J = 0,
 /* iterator of return array, equals to its length */
@@ -107,35 +93,20 @@ variables are faster.
 				nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 				while (node = nodes[J++]) {
-					var h = 0,
-						child,
-/* find all TAGs or just return all possible neibours */
-						childs = _.children[children || " "](node, tag || '*');
-					while (child = childs[h++]) {
 /*
-check them for ID or Class. Also check for expando 'yeasss'
-to filter non-selected elements. Typeof 'string' not added -
-if we get element with name="id" it won't be equal to given ID string.
-Also check for given attribute.
-Modificator is either not set in the selector, or just has been nulled
-by previous switch.
-Ancestor will return true for simple child-parent relationship.
+find all children for given ancestor.
+Params: parant node, tag for selection, array af additional 
+params {single}, index of new nodes, new nodes array (to add),
+if the current iteration is last (to add expando)
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
-/* 
-Need to define expando property to true for the last step.
-Then mark selected element with expando
-*/
-							if (i == singles_length) {
-								child.yeasss = 1;
-							}
-/* and add to result array */
-							newNodes[idx++] = child;
-						}
-					}
+					idx = (newNodes = ancestor(node, single[1], single, idx, newNodes, i == singles_length)).length;
 				}
 /* put selected nodes in local nodes' set */
 				nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
+				ancestor = null;
+			} else {
+/* switch ancestor ( , > , ~ , +) */
+				ancestor = _.ancestor[single];
 			}
 		}
 /* inialize sets with nodes */
@@ -159,7 +130,7 @@ Then mark selected element with expando
 	var idx = sets ? sets.length || (sets.yeasss = null) : 0;
 /*
 Need this looping as far as we also have expando 'yeasss'
-that must be nulled. Need this only to generic case
+that must be nulled. Need this only for generic case
 */
 	while (idx--) {
 		sets[idx].yeasss = null;
@@ -167,10 +138,6 @@ that must be nulled. Need this only to generic case
 /* return computed sets of elements */
 	return sets;
 };
-/* cache for selected nodes, no leaks in IE detected */
-_.cache = {};
-/* caching global document */
-_.doc = document;
 /*
 return some simple cases: only ID or only CLASS for the very
 first case: don't need additional checks
@@ -258,83 +225,113 @@ if we have the only element -- it's already in nodes.
 		}
 };
 /*
-function calls for CSS2 ancestor modificators.
-Check if current child is correct for given parent / brother.
+check them for ID or Class. Also check for expando 'yeasss'
+to filter non-selected elements. Typeof 'string' not added -
+if we get element with name="id" it won't be equal to given ID string.
+Also check for given attribute.
+Modificator is either not set in the selector, or just has been nulled
+by previous switch.
 */
-_.ancestor = {
-/*
-from w3.org: "an F element preceded by an E element". We've
-already selected right node on the previuos step. Just return true.
+_.core = function(node, single) {
+/* 
+Get all required matches from exec:
+tag, id, class, attribute, value, modificator, index.
 */
-	"~":
-		function () {
-			return true;
-		},
-/*
-from w3.org: "an F element immediately preceded by an E element".
-We've already selected right node on the previuos step. Just return
-true.
-*/
-	"+":
-		function () {
-			return true;
-		},
-/* from w3.org: "an F element child of an E element" */
-	">":
-		function (child, parent) {
-			return true;
-		},
-/* from w3.org: "an F element descendant of an E element" */
-	" ":
-		function (){
-			return true;
-		}
+	var id = single[2],
+		klass = single[3],
+		attr = single[4],
+		value = single[5],
+		modificator = single[6],
+		ind = single[7];
+	return (!id || (id && node.id === id)) && (!klass || (klass && node.className.match(klass))) && (!attr || (attr && node[attr] && (!value || node[attr] === value)) || (attr === 'class' && node.className.match(value))) && !node.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](node, ind) : modificator);
 };
 /*
-return correct 'children' for given node. They can be
-direct childs, neighbours or something else.
+function calls for CSS1/2 ancestors. Return correct 'children' for
+given node. They can be direct childs, neighbours or something else.
 */
-_.children = {
+_.ancestor = {
+/* from w3.org: "an F element preceded by an E element" */
 	"~":
-		function (child, tag) {
-/* array to return */
-			var nodes = [],
-/* cached length of array */
-				idx = 0;
+		function (child, tag, single, idx, newNodes, last) {
 			tag = tag.toLowerCase();
-			nodes[idx++] = child = child.parentNode.firstChild;
+			newNodes[idx++] = child = child.parentNode.firstChild;
 /* check if we selected correct node */
 			idx += child.nodeType == 1 && child.nodeName.toLowerCase() === tag ? 0 : -1;
 /* continue with siblings */
 			while (child = child.nextSibling) {
-				if (child.nodeType == 1 && child.nodeName.toLowerCase() === tag) {
-					nodes[idx++] = child;
+				if (child.nodeType == 1 && (!tag || child.nodeName.toLowerCase() === tag) && _.core(child, single)) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+					if (last) {
+						child.yeasss = 1;
+					}
+/* and add to result array */
+					newNodes[idx++] = child;
 				}
 			}
-			return nodes;
+			return newNodes;
 		},
+/* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
-		function (child, tag) {
+		function (child, tag, single, idx, newNodes, last) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.tagName.toLowerCase() === tag.toLowerCase() ? [child] : [];
+			if (child && (!tag || child.tagName.toLowerCase() === tag.toLowerCase()) && _.core(child, single)) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+					if (last) {
+						child.yeasss = 1;
+					}
+/* and add to result array */
+					newNodes[idx++] = child;				
+			}
+			return newNodes;
 		},
+/* from w3.org: "an F element child of an E element" */
 	">":
-		function (child, tag) {
-			var nodes = child.getElementsByTagName(tag),
-				i = 0,
-				idx = 0,
-				node,
-				newNodes = [];
-			while (node = nodes[i++]) {
-				if (node.parentNode === child) {
+		function (child, tag, single, idx, newNodes, last) {
+			var nodes = child.getElementsByTagName(tag || '*'),
+				h = 0,
+				node;
+			while (node = nodes[h++]) {
+				if (node.parentNode === child && _.core(node, single)) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+					if (last) {
+						node.yeasss = 1;
+					}
+/* and add to result array */
+
 					newNodes[idx++] = node;
 				}
 			}
 			return newNodes;
 		},
+/* from w3.org: "an F element descendant of an E element" */
 	" ":
-		function (child, tag) {
-			return child.getElementsByTagName(tag);
+		function (child, tag, single, idx, newNodes, last) {
+			var nodes = child.getElementsByTagName(tag || '*'),
+				node,
+				h = 0;
+			while (node = nodes[h++]) {
+				if (_.core(node, single)) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+					if (last) {
+						node.yeasss = 1;
+					}
+/* and add to result array */
+					newNodes[idx++] = node;
+				}
+			}
+			return newNodes;
 		}
 };
 /*
@@ -450,6 +447,10 @@ options in Safari work properly.
       return !child.selected;
     }
 };
+/* cache for selected nodes, no leaks in IE detected */
+_.cache = {};
+/* caching global document */
+_.doc = document;
 /*
 clean cache on DOM changes. Code copied from Sizzle
 (thx, John), rev. 2008-12-05, line 13. Don't know why
