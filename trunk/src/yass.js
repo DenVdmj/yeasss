@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 22:36:34 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 235 $
+* $Date: 2008-12-23 23:08:34 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 237 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -66,8 +66,6 @@ to % to avoid collisions
 			i = 0,
 /* to remember ancestor call for next childs, initialize with [" "] */
 			ancestor = _.ancestor[" "],
-/* to get correct 'children' for given ancestor selector */
-			children = " ",
 /*
 current set of nodes - to handle single selectors -
 is cleanded up with DOM root
@@ -108,7 +106,7 @@ variables are faster.
 					var h = 0,
 						child,
 /* find all TAGs or just return all possible neibours */
-						childs = _.children[children](node, tag || '*');
+						childs = ancestor(node, tag || '*');
 					while (child = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
@@ -119,15 +117,13 @@ Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Ancestor will return true for simple child-parent relationship.
 */
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator) && ancestor(child, node))) {
+						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
 */
 							if (i == singles_length) {
 								child.yeasss = 1;
-/* clean expando from child parentNode (for ~ selector) */
-								child.parentNode.yeass = null;
 							}
 /* and add to result array */
 							newNodes[idx++] = child;
@@ -139,7 +135,7 @@ Then mark selected element with expando
 				ancestor = null;
 			} else {
 /* switch ancestor ( , > , ~ , +) */
-				ancestor = _.ancestor[children = single];
+				ancestor = _.ancestor[single];
 			}
 		}
 /* inialize sets with nodes */
@@ -261,56 +257,30 @@ So ;oop in given elements to find the correct one
 };
 /*
 function calls for CSS2 ancestor modificators.
-Check if current child is correct for given parent / brother.
-*/
-_.ancestor = {
-/*
-from w3.org: "an F element preceded by an E element". We've
-already selected right node on the previuos step. Just return true.
-*/
-	"~":
-		function (child, node) {
-			return child.parentNode === node.parentNode;
-		},
-/*
-from w3.org: "an F element immediately preceded by an E element".
-We've already selected right node on the previuos step. Just return
-true.
-*/
-	"+":
-		function () {
-			return true;
-		},
-/* from w3.org: "an F element child of an E element" */
-	">":
-		function (child, parent) {
-			return true;
-		},
-/* from w3.org: "an F element descendant of an E element" */
-	" ":
-		function (){
-			return true;
-		}
-};
-/*
-return correct 'children' for given node. They can be
+Return correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
-_.children = {
+_.ancestor = {
+/* from w3.org: "an F element preceded by an E element" */
 	"~":
 		function (child, tag) {
-			var parent = child.parentNode;
-/*
-Add one more expando - yeass - t improve performance
-and not select one parent element twice
-*/
-			return parent.yeass ? [] : !(parent.yeass = 1) || parent.getElementsByTagName(tag);
+			var newNodes = [],
+				idx = 0;
+			tag = tag.toLowerCase();
+			while (child = child.nextSibling) {
+				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag) {
+					newNodes[idx++] = child;
+				}
+			}
+			return newNodes;
 		},
+/* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
 		function (child, tag) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.tagName.toLowerCase() === tag.toLowerCase() ? [child] : [];
+			return child && child.nodeName.toLowerCase() === tag.toLowerCase() ? [child] : [];
 		},
+/* from w3.org: "an F element child of an E element" */
 	">":
 		function (child, tag) {
 			var nodes = child.getElementsByTagName(tag),
@@ -325,6 +295,7 @@ and not select one parent element twice
 			}
 			return newNodes;
 		},
+/* from w3.org: "an F element descendant of an E element" */
 	" ":
 		function (child, tag) {
 			return child.getElementsByTagName(tag);
