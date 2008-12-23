@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 22:25:34 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 234 $
+* $Date: 2008-12-23 22:36:34 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 235 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -40,11 +40,8 @@ All methods are called via . not [] - thx to arty
 /* return and cache results */
 	return _.cache[selector] = sets;
 };
-/*
-function to get generic selector. Current set of nodes -
-to handle single selectors - is cleanded up with DOM root
-*/
-_.generic = function (selector, nodes) {
+/* function to get generic selector */
+_.generic = function (selector, root) {
 /* number of groups to merge or not result arrays */
 	var groups_length = 0,
 /*
@@ -70,7 +67,12 @@ to % to avoid collisions
 /* to remember ancestor call for next childs, initialize with [" "] */
 			ancestor = _.ancestor[" "],
 /* to get correct 'children' for given ancestor selector */
-			children = " ";
+			children = " ",
+/*
+current set of nodes - to handle single selectors -
+is cleanded up with DOM root
+*/
+			nodes = root;
 /*
 John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
