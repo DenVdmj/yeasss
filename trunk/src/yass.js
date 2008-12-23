@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 23:08:34 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 237 $
+* $Date: 2008-12-23 23:21:35 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 238 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -267,7 +267,8 @@ _.ancestor = {
 			var newNodes = [],
 				idx = 0;
 			tag = tag.toLowerCase();
-			while (child = child.nextSibling) {
+/* don't touch already selected elements */
+			while ((child = child.nextSibling) && !child.yeasss) {
 				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag) {
 					newNodes[idx++] = child;
 				}
