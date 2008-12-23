@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 10:49:32 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 230 $
+* $Date: 2008-12-23 22:25:34 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 234 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -40,8 +40,11 @@ All methods are called via . not [] - thx to arty
 /* return and cache results */
 	return _.cache[selector] = sets;
 };
-/* function to get generic selector */
-_.generic = function (selector, root) {
+/*
+function to get generic selector. Current set of nodes -
+to handle single selectors - is cleanded up with DOM root
+*/
+_.generic = function (selector, nodes) {
 /* number of groups to merge or not result arrays */
 	var groups_length = 0,
 /*
@@ -64,11 +67,6 @@ to % to avoid collisions
 /* to handle RegExp for single selector */
 			single,
 			i = 0,
-/*
-current set of nodes, to handle single selectors.
-Clean them with DOM root
-*/
-			nodes = root,
 /* to remember ancestor call for next childs, initialize with [" "] */
 			ancestor = _.ancestor[" "],
 /* to get correct 'children' for given ancestor selector */
@@ -126,6 +124,8 @@ Then mark selected element with expando
 */
 							if (i == singles_length) {
 								child.yeasss = 1;
+/* clean expando from child parentNode (for ~ selector) */
+								child.parentNode.yeass = null;
 							}
 /* and add to result array */
 							newNodes[idx++] = child;
@@ -194,15 +194,13 @@ thx to deerua. Get all matching elements with this id
 /*
 if more than 1, choose first with the correct id.
 if we have the only element -- it's already in nodes.
+So ;oop in given elements to find the correct one
 */
-				if (nodes_length) {
-/* loop in given elements to find the correct one */
-					while (nodes_length--) {
-						var node = nodes[nodes_length];
-						if (node.id === id) {
-							nodes = node;
-							nodes_length = 0;
-						}
+				while (nodes_length--) {
+					var node = nodes[nodes_length];
+					if (node.id === id) {
+						nodes = node;
+						nodes_length = 0;
 					}
 				}
 			}
@@ -213,7 +211,7 @@ if we have the only element -- it's already in nodes.
 		function (selector, root) {
 			if (_.doc.getElementsByClassName) {
 				var nodes = root.getElementsByClassName(selector.slice(1));
-				return nodes.length == 1 ? nodes[0] : nodes;
+				return nodes.length === 1 ? nodes[0] : nodes;
 			}
 			return null;
 		},
@@ -221,7 +219,7 @@ if we have the only element -- it's already in nodes.
 	'%':
 		function (selector, root) {
 			var nodes = root.getElementsByTagName(selector);
-			return nodes.length == 1 ? nodes[0] : nodes;
+			return nodes.length === 1 ? nodes[0] : nodes;
 		},
 /* return elements by ATTR */
 	'[':
@@ -299,7 +297,12 @@ direct childs, neighbours or something else.
 _.children = {
 	"~":
 		function (child, tag) {
-			return child.parentNode.getElementsByTagName(tag);
+			var parent = child.parentNode;
+/*
+Add one more expando - yeass - t improve performance
+and not select one parent element twice
+*/
+			return parent.yeass ? [] : !(parent.yeass = 1) || parent.getElementsByTagName(tag);
 		},
 	"+":
 		function (child, tag) {
@@ -340,7 +343,7 @@ _.modificators = {
 	'last-child': function (child) {
 			var brother = child;
 /* loop in lastChilds while nodeType isn't element */
-			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
+			while ((brother = brother.nextSibling) && brother.nodeType !== 1) {}
 /* Check for node's existence */
 			return !!brother;
 		},
@@ -404,7 +407,7 @@ Thx to John, from Sizzle, 2008-12-05, line 416
 		},
 /* from w3.org: "an E element, only child of its parent" */
 	'only-child': function (child) {
-			return (child.parentNode.getElementsByTagName('*').length != 1);
+			return child.parentNode.getElementsByTagName('*').length != 1;
 		},
 /*
 from w3.org: "a user interface element E which is checked
@@ -418,7 +421,7 @@ from w3.org: "an element of type E in language "fr"
 (the document language specifies how language is determined)"
 */
 	'lang': function (child, ind) {
-			return (child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind);
+			return child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind;
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 398 */
 	'enabled': function (child) {
