@@ -14,16 +14,21 @@
 <li>class selectors (e.g., <code>.example</code>),</li>
 <li>node type selectors like <code>span</code> or <code>div</code>,</li>
 <li>descendant selectors (i.e. <code>div p a</code>),</li>
+<li><code>&gt;</code> child element selectors,</li>
+<li><code>~</code>, the immediately preceeded-by sibling selector,</li>
+<li><code>+</code>, the preceeded-by sibling selector</li>
 <li><code>#id</code> style ID selectors,</li>
 <li><code>*</code> universal selector,</li>
 <li>attribute queries:<ul>
 <li><code>[type=checkbox]</code> attribute value exact match,</li>
+<li><code>[title]</code> attribute presence selector,</li>
 </ul></li>
 <li><code>:first-child</code>, <code>:last-child</code> positional selectors,</li>
 <li><code>:empty</code> content empty selector,</li>
 <li><code>:root</code> selector for <code>HTML</code> element,</li>
 <li><code>:checked</code> pseudo selector for checked checkboxes or radio buttons,</li>
 <li><code>:nth-child(3)</code> style positional calculations,</li>
+<li><code>:nth-child(even)</code>, <code>:nth-child(odd)</code>, <code>:nth-child(2n+1)</code> positional selectors,</li>
 <li><code>:lang</code> pseudo selector.</li>
 </ul>
 
@@ -34,18 +39,14 @@
 <p>Some of the selectors are not supported yet. Maybe they will be handled by the next versions of YASS.</p>
 
 <ul>
-<li><code>&gt;</code> child element selectors,</li>
-<li><code>~</code>, the immediately preceeded-by sibling selector,</li>
-<li><code>+</code>, the preceeded-by sibling selector</li>
+
 <li>Some of CSS2 defined selectors, i.e.
 <ul>
-<li><code>[title]</code> attribute presence selector,</li>
 <li><code>[rel~=nofollow]</code> attribute value list item match,</li>
 <li><code>[class^=block]</code> attribute start match,</li>
 <li><code>[class$=hidden]</code> attribute end match,</li>
 <li><code>[alt*=image]</code> attribute substring match,</li>
 </ul></li>
-<li><code>:nth-child(even)</code>, <code>:nth-child(odd)</code>, <code>:nth-child(2n+1)</code> positional selectors,</li>
 <li><code>:not(...)</code> negation pseudo selectors</li>
 </ul>
 
