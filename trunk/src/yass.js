@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.2.8 - The fastest CSS selectors JavaScript library
+* YASS 0.2.9 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 23:21:35 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 238 $
+* $Date: 2008-12-23 21:40:35 +3000 (Tue, 23 Dec 2008) $
+* $Rev: 240 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -142,17 +142,8 @@ Then mark selected element with expando
 		sets = sets || nodes;
 /* fixing bug on non-existent selector, thx to deerua */
 		if (nodes && groups_length > 1) {
-			var node,
-				K = 0,
-				idx = sets.length;
-/* remember selected nodes to global set to start new selection */
-			while (node = nodes[K++]) {
-				sets[idx++] = node;
-			}
-/* handle case with the only element in nodes */
-			if (K == 1 && nodes) {
-				sets[idx++] = nodes;
-			}
+/* concat is faster than simple looping */
+			sets = (sets.length ? sets : [sets]).concat(nodes);
 		}
 	}
 /* define sets length to clean yeasss */
@@ -331,7 +322,7 @@ from w3.org: "an E element, the n-th child of its parent"
 	'nth-child': function (child, ind) {
 			ind = ind.replace(/even/,"2n").replace(/odd/,"2n+1");
 /* check if we need computation */
-			if (/n/.test(ind)) {
+			if (ind.indexOf('n') !== -1) {
 /* add multiplying for short form, % changes to + */
 				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
 				var brothers = child.parentNode.getElementsByTagName('*'),
@@ -355,7 +346,7 @@ counting from the last one"
 			var brothers = child.parentNode.getElementsByTagName('*'),
 				n = brothers.length - 1;
 /* check if we need computation */
-			if (/n/.test(ind)) {
+			if (ind.indexOf('n') !== -1) {
 /* add multiplying for short form, % changes to + */
 				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
 /* looping in child to find if nth expression is correct */
