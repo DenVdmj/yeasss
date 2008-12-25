@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-23 21:21:35 +3000 (Tue, 23 Dec 2008) $
-* $Rev: 240 $
+* $Date: 2008-12-25 13:05:36 +3000 (Thu, 25 Dec 2008) $
+* $Rev: 244 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -32,9 +32,98 @@ All methods are called via . not [] - thx to arty
 */
 		if (_.doc.querySelectorAll) {
 			sets = root.querySelectorAll(selector);
-		} else {
 /* call generic function for complicated selectors */
-			sets = _.generic(selector, root);
+		} else {
+			/* number of groups to merge or not result arrays */
+			var groups_length = 0,
+/*
+groups of selectors separated by commas.
+Split by RegExp, thx to tenshi.
+*/
+				groups = selector.split(/ *, */),
+				group,
+/* current sets of nodes, to handle comma-separated selectors */
+				sets = null;
+/* loop in groups, maybe the fastest way */
+			while (group = groups[groups_length++]) {
+/*
+Split selectors by space - to form single group tag-id-class,
+or to get heredity operator. Replace + in child modificators
+to % to avoid collisions
+*/
+				var singles = group.replace(/(\([^)]*)\+([^)]*\))/,"$1%$2").split(/ *( |>|~|\+) */),
+					singles_length = singles.length,
+/* to handle RegExp for single selector */
+					single,
+					i = 0,
+/* to remember ancestor call for next childs, initialize with [" "] */
+					ancestor = _.ancestor[" "],
+/*
+current set of nodes - to handle single selectors -
+is cleanded up with DOM root
+*/
+					nodes = root;
+/*
+John's Resig fast replace works a bit slower than
+simple exec. Thx to GreLI for 'greed' RegExp
+*/
+				while (single = singles[i++]) {
+					if (ancestor && nodes) {
+						single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
+/* 
+Get all required matches from exec:
+tag, id, class, attribute, value, modificator, index.
+*/
+						var tag = single[1],
+							id = single[2],
+							klass = single[3],
+							attr = single[4],
+							value = single[5],
+							modificator = single[6],
+							ind = single[7],
+/* new nodes array */
+							newNodes = [],
+/* length of root nodes */
+							J = 0,
+/* iterator of return array, equals to its length */
+							idx = 0,
+							node;
+/*
+if root is single -- just make it as an array. Local
+variables are faster.
+*/
+						nodes = nodes.length ? nodes : [nodes];
+/* loop in all root nodes */
+						while (node = nodes[J++]) {
+/* find all TAGs or just return all possible neibours */
+								newNodes = newNodes.concat(ancestor(node, single[1] || '*', single[2], single[3], single[4], single[5], single[6], single[7], i == singles_length));
+						}
+						var idx = newNodes.length;
+/* put selected nodes in local nodes' set */
+						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
+						ancestor = null;
+					} else {
+/* switch ancestor ( , > , ~ , +) */
+						ancestor = _.ancestor[single];
+					}
+				}
+/* inialize sets with nodes */
+				sets = sets || nodes;
+/* fixing bug on non-existent selector, thx to deerua */
+				if (nodes && groups_length > 1) {
+/* concat is faster than simple looping */
+					sets = (sets.length ? sets : [sets]).concat(nodes);
+				}
+			}
+/* define sets length to clean yeasss */
+			var idx = sets ? sets.length || (sets.yeasss = null) : 0;
+/*
+Need this looping as far as we also have expando 'yeasss'
+that must be nulled. Need this only to generic case
+*/
+			while (idx--) {
+				sets[idx].yeasss = null;
+			}
 		}
 	}
 /* return and cache results */
@@ -42,121 +131,7 @@ All methods are called via . not [] - thx to arty
 };
 /* function to get generic selector */
 _.generic = function (selector, root) {
-/* number of groups to merge or not result arrays */
-	var groups_length = 0,
-/*
-groups of selectors separated by commas.
-Split by RegExp, thx to tenshi.
-*/
-		groups = selector.split(/ *, */),
-		group,
-/* current sets of nodes, to handle comma-separated selectors */
-		sets = null;
-/* loop in groups, maybe the fastest way */
-	while (group = groups[groups_length++]) {
-/*
-Split selectors by space - to form single group tag-id-class,
-or to get heredity operator. Replace + in child modificators
-to % to avoid collisions
-*/
-		var singles = group.replace(/(\([^)]*)\+([^)]*\))/,"$1%$2").split(/ *( |>|~|\+) */),
-			singles_length = singles.length,
-/* to handle RegExp for single selector */
-			single,
-			i = 0,
-/* to remember ancestor call for next childs, initialize with [" "] */
-			ancestor = _.ancestor[" "],
-/*
-current set of nodes - to handle single selectors -
-is cleanded up with DOM root
-*/
-			nodes = root;
-/*
-John's Resig fast replace works a bit slower than
-simple exec. Thx to GreLI for 'greed' RegExp
-*/
-		while (single = singles[i++]) {
-			if (ancestor && nodes) {
-				single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
-/* 
-Get all required matches from exec:
-tag, id, class, attribute, value, modificator, index.
-*/
-				var tag = single[1],
-					id = single[2],
-					klass = single[3],
-					attr = single[4],
-					value = single[5],
-					modificator = single[6],
-					ind = single[7],
-/* new nodes array */
-					newNodes = [],
-/* length of root nodes */
-					J = 0,
-/* iterator of return array, equals to its length */
-					idx = 0,
-					node;
-/*
-if root is single -- just make it as an array. Local
-variables are faster.
-*/
-				nodes = nodes.length ? nodes : [nodes];
-/* loop in all root nodes */
-				while (node = nodes[J++]) {
-					var h = 0,
-						child,
-/* find all TAGs or just return all possible neibours */
-						childs = ancestor(node, tag || '*');
-					while (child = childs[h++]) {
-/*
-check them for ID or Class. Also check for expando 'yeasss'
-to filter non-selected elements. Typeof 'string' not added -
-if we get element with name="id" it won't be equal to given ID string.
-Also check for given attribute.
-Modificator is either not set in the selector, or just has been nulled
-by previous switch.
-Ancestor will return true for simple child-parent relationship.
-*/
-						if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-/* 
-Need to define expando property to true for the last step.
-Then mark selected element with expando
-*/
-							if (i == singles_length) {
-								child.yeasss = 1;
-							}
-/* and add to result array */
-							newNodes[idx++] = child;
-						}
-					}
-				}
-/* put selected nodes in local nodes' set */
-				nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
-				ancestor = null;
-			} else {
-/* switch ancestor ( , > , ~ , +) */
-				ancestor = _.ancestor[single];
-			}
-		}
-/* inialize sets with nodes */
-		sets = sets || nodes;
-/* fixing bug on non-existent selector, thx to deerua */
-		if (nodes && groups_length > 1) {
-/* concat is faster than simple looping */
-			sets = (sets.length ? sets : [sets]).concat(nodes);
-		}
-	}
-/* define sets length to clean yeasss */
-	var idx = sets ? sets.length || (sets.yeasss = null) : 0;
-/*
-Need this looping as far as we also have expando 'yeasss'
-that must be nulled. Need this only to generic case
-*/
-	while (idx--) {
-		sets[idx].yeasss = null;
-	}
-/* return computed sets of elements */
-	return sets;
+
 };
 /* cache for selected nodes, no leaks in IE detected */
 _.cache = {};
@@ -254,13 +229,16 @@ direct childs, neighbours or something else.
 _.ancestor = {
 /* from w3.org: "an F element preceded by an E element" */
 	"~":
-		function (child, tag) {
+		function (child, tag, id, klass, attr, value, modificator, ind, last) {
 			var newNodes = [],
 				idx = 0;
 			tag = tag.toLowerCase();
 /* don't touch already selected elements */
 			while ((child = child.nextSibling) && !child.yeasss) {
-				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag) {
+				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+					if (last) {
+						child.yeasss = 1;
+					}
 					newNodes[idx++] = child;
 				}
 			}
@@ -268,29 +246,44 @@ _.ancestor = {
 		},
 /* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
-		function (child, tag) {
+		function (child, tag, id, klass, attr, value, modificator, ind, last) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.nodeName.toLowerCase() === tag.toLowerCase() ? [child] : [];
+			return child && child.nodeName.toLowerCase() === tag.toLowerCase() && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || [child] : [];
 		},
 /* from w3.org: "an F element child of an E element" */
 	">":
-		function (child, tag) {
-			var nodes = child.getElementsByTagName(tag),
+		function (node, tag, id, klass, attr, value, modificator, ind, last) {
+			var nodes = node.getElementsByTagName(tag),
 				i = 0,
 				idx = 0,
-				node,
+				child,
 				newNodes = [];
-			while (node = nodes[i++]) {
-				if (node.parentNode === child) {
-					newNodes[idx++] = node;
+			while (child = nodes[i++]) {
+				if (child.parentNode === node && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+					if (last) {
+						child.yeasss = 1;
+					}
+					newNodes[idx++] = child;
 				}
 			}
 			return newNodes;
 		},
 /* from w3.org: "an F element descendant of an E element" */
 	" ":
-		function (child, tag) {
-			return child.getElementsByTagName(tag);
+		function (child, tag, id, klass, attr, value, modificator, ind, last) {
+			var nodes = child.getElementsByTagName(tag),
+				i = 0,
+				idx = 0,
+				newNodes = [];
+			while (child = nodes[i++]) {
+				if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+					if (last) {
+						child.yeasss = 1;
+					}
+					newNodes[idx++] = child;
+				}
+			}
+			return newNodes;
 		}
 };
 /*
