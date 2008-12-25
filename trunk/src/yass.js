@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-25 13:05:36 +3000 (Thu, 25 Dec 2008) $
-* $Rev: 244 $
+* $Date: 2008-12-25 13:08:37 +3000 (Thu, 25 Dec 2008) $
+* $Rev: 245 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -95,10 +95,33 @@ variables are faster.
 						nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 						while (node = nodes[J++]) {
+							var h = 0,
+								child,
 /* find all TAGs or just return all possible neibours */
-								newNodes = newNodes.concat(ancestor(node, single[1] || '*', single[2], single[3], single[4], single[5], single[6], single[7], i == singles_length));
+								childs = ancestor(node, tag || '*');
+							while (child = childs[h++]) {
+/*
+check them for ID or Class. Also check for expando 'yeasss'
+to filter non-selected elements. Typeof 'string' not added -
+if we get element with name="id" it won't be equal to given ID string.
+Also check for given attribute.
+Modificator is either not set in the selector, or just has been nulled
+by previous switch.
+Ancestor will return true for simple child-parent relationship.
+*/
+								if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+									if (i == singles_length) {
+										child.yeasss = 1;
+									}
+/* and add to result array */
+									newNodes[idx++] = child;
+								}
+							}
 						}
-						var idx = newNodes.length;
 /* put selected nodes in local nodes' set */
 						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
 						ancestor = null;
@@ -229,16 +252,13 @@ direct childs, neighbours or something else.
 _.ancestor = {
 /* from w3.org: "an F element preceded by an E element" */
 	"~":
-		function (child, tag, id, klass, attr, value, modificator, ind, last) {
+		function (child, tag) {
 			var newNodes = [],
 				idx = 0;
 			tag = tag.toLowerCase();
 /* don't touch already selected elements */
 			while ((child = child.nextSibling) && !child.yeasss) {
-				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-					if (last) {
-						child.yeasss = 1;
-					}
+				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag) {
 					newNodes[idx++] = child;
 				}
 			}
@@ -246,44 +266,29 @@ _.ancestor = {
 		},
 /* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
-		function (child, tag, id, klass, attr, value, modificator, ind, last) {
+		function (child, tag) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.nodeName.toLowerCase() === tag.toLowerCase() && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || [child] : [];
+			return child && child.nodeName.toLowerCase() === tag.toLowerCase() ? [child] : [];
 		},
 /* from w3.org: "an F element child of an E element" */
 	">":
-		function (node, tag, id, klass, attr, value, modificator, ind, last) {
-			var nodes = node.getElementsByTagName(tag),
+		function (child, tag) {
+			var nodes = child.getElementsByTagName(tag),
 				i = 0,
 				idx = 0,
-				child,
+				node,
 				newNodes = [];
-			while (child = nodes[i++]) {
-				if (child.parentNode === node && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-					if (last) {
-						child.yeasss = 1;
-					}
-					newNodes[idx++] = child;
+			while (node = nodes[i++]) {
+				if (node.parentNode === child) {
+					newNodes[idx++] = node;
 				}
 			}
 			return newNodes;
 		},
 /* from w3.org: "an F element descendant of an E element" */
 	" ":
-		function (child, tag, id, klass, attr, value, modificator, ind, last) {
-			var nodes = child.getElementsByTagName(tag),
-				i = 0,
-				idx = 0,
-				newNodes = [];
-			while (child = nodes[i++]) {
-				if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-					if (last) {
-						child.yeasss = 1;
-					}
-					newNodes[idx++] = child;
-				}
-			}
-			return newNodes;
+		function (child, tag) {
+			return child.getElementsByTagName(tag);
 		}
 };
 /*
