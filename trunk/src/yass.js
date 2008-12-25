@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-25 13:08:37 +3000 (Thu, 25 Dec 2008) $
-* $Rev: 245 $
+* $Date: 2008-12-25 14:25:37 +3000 (Thu, 25 Dec 2008) $
+* $Rev: 247 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -49,14 +49,14 @@ Split by RegExp, thx to tenshi.
 /*
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
-to % to avoid collisions
+to % to avoid collisions. Additional replace is required for IE.
 */
-				var singles = group.replace(/(\([^)]*)\+([^)]*\))/,"$1%$2").split(/ *( |>|~|\+) */),
+				var singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(~|>|\+)/," $1 ").split(/ +/),
 					singles_length = singles.length,
 /* to handle RegExp for single selector */
 					single,
 					i = 0,
-/* to remember ancestor call for next childs, initialize with [" "] */
+/* to remember ancestor call for next childs, default is " " */
 					ancestor = _.ancestor[" "],
 /*
 current set of nodes - to handle single selectors -
@@ -68,7 +68,7 @@ John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-					if (ancestor && nodes) {
+					if (!_.ancestor[single] && nodes) {
 						single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
@@ -124,7 +124,6 @@ Then mark selected element with expando
 						}
 /* put selected nodes in local nodes' set */
 						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
-						ancestor = null;
 					} else {
 /* switch ancestor ( , > , ~ , +) */
 						ancestor = _.ancestor[single];
