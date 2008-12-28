@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 11:48:37 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 251 $
+* $Date: 2008-12-28 16:54:38 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 255 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -57,7 +57,7 @@ to % to avoid collisions. Additional replace is required for IE.
 					single,
 					i = 0,
 /* to remember ancestor call for next childs, default is " " */
-					ancestor = _.ancestor[" "],
+					ancestor = " ",
 /*
 current set of nodes - to handle single selectors -
 is cleanded up with DOM root
@@ -80,7 +80,11 @@ tag, id, class, attribute, value, modificator, index.
 							attr = single[4],
 							value = single[5],
 							modificator = single[6],
-							ind = single[7],
+/*
+for nth-childs modificator already transformed into array.
+Example used from Sizzle, rev. 2008-12-05, line 362.
+*/
+							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)\d*)?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n+1" || !/\D/.test(single[7]) && "0n+" + single[7] || single[7]) : single[7],
 /* new nodes array */
 							newNodes = [],
 /* length of root nodes */
@@ -98,7 +102,7 @@ variables are faster.
 							var h = 0,
 								child,
 /* find all TAGs or just return all possible neibours */
-								childs = ancestor(node, tag || '*');
+								childs = _.ancestor[ancestor](node, tag || '*');
 							while (child = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
@@ -108,7 +112,7 @@ Also check for given attribute.
 Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Ancestor will return true for simple child-parent relationship.
-*/
+								*/
 								if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 /* 
 Need to define expando property to true for the last step.
@@ -126,7 +130,7 @@ Then mark selected element with expando
 						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
 					} else {
 /* switch ancestor ( , > , ~ , +) */
-						ancestor = _.ancestor[single];
+						ancestor = single;
 					}
 				}
 /* inialize sets with nodes */
@@ -150,10 +154,6 @@ that must be nulled. Need this only to generic case
 	}
 /* return and cache results */
 	return _.cache[selector] = sets;
-};
-/* function to get generic selector */
-_.generic = function (selector, root) {
-
 };
 /* cache for selected nodes, no leaks in IE detected */
 _.cache = {};
@@ -257,7 +257,7 @@ _.ancestor = {
 			tag = tag.toLowerCase();
 /* don't touch already selected elements */
 			while ((child = child.nextSibling) && !child.yeasss) {
-				if (child.nodeType === 1 && child.nodeName.toLowerCase() === tag) {
+				if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag)) {
 					newNodes[idx++] = child;
 				}
 			}
@@ -267,7 +267,7 @@ _.ancestor = {
 	"+":
 		function (child, tag) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && child.nodeName.toLowerCase() === tag.toLowerCase() ? [child] : [];
+			return child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') ? [child] : [];
 		},
 /* from w3.org: "an F element child of an E element" */
 	">":
@@ -317,52 +317,49 @@ _.modificators = {
 from w3.org: "an E element, the n-th child of its parent"
 */
 	'nth-child': function (child, ind) {
-/* add multiplying for short form, reverse logic for n */
-		ind = ind.replace(/even/,"2n").replace(/odd/,"2n%1").replace(/n\s*-/,"n+").replace(/n\s*%/,"n-").replace(/(.*)n(.*)?/,"(i$2)%$1");
-		var i = 1,
-			brother = child.parentNode.firstChild;
-		if (brother.nodeType === 1) {
-			if (brother === child && !eval(ind)) {
-				return 0;
-			}
-			i++;
-		}
+/* check if already looked into siblings, using exando - very bad */
+		if (child.nodeIndex) {
+			return !( (child.nodeIndex + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
+		} else {
+/* in the other case just reverse logic for n and loop siblings */
+			ind = "(i" + (ind[3] ? (ind[2] === '%' ? -1 : 1)*ind[3] : '') + ")%" + ind[1];
+			var i = 1,
+				brother = child.parentNode.firstChild;
 /* looping in child to find if nth expression is correct */
-		while (brother = brother.nextSibling) {
-			if (brother.nodeType === 1) {
-				if (child === brother && !eval(ind)) {
-					return 0;
+			do {
+				if (brother.nodeType === 1) {
+					if (child === brother && !eval(ind)) {
+						return 0;
+					}
+/* nodeIndex expando used from Peppy / Sizzle/ jQuery */
+					brother.nodeIndex = i++;
 				}
-				i++;
-			}
+			} while (brother = brother.nextSibling);
+			return 1;
 		}
-		return 1;
 	},
 /*
 from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
-/* add multiplying for short form, reverse logic for n */
-		ind = ind.replace(/even/,"2n").replace(/odd/,"2n%1").replace(/n\s*-/,"n+").replace(/n\s*%/,"n-").replace(/(.*)n(.*)?/,"(i$2)%$1");
-		var i = 1,
-			brother = child.parentNode.lastChild;
-		if (brother.nodeType === 1) {
-			if (brother === child && !eval(ind)) {
-				return 0;
-			}
-			i++;
-		}
-/* looping in child to find if nth expression is correct */
-		while (brother = brother.previousSibling) {
-			if (brother.nodeType === 1) {
-				if (child === brother && !eval(ind)) {
-					return 0;
+/* lamost the same as previous one */
+		if (child.nodeIndexLast) {
+			return !( (child.nodeIndexLast + (ind[2] === '%' ? -1 : 1) * ind[3]) % ind[1]);
+		} else {
+			ind = "(i" + (ind[2] === '%' ? -1 : 1)*ind[3] + ")%" + ind[1];
+			var i = 1,
+				brother = child.parentNode.lastChild;
+			do {
+				if (brother.nodeType === 1) {
+					if (child === brother && !eval(ind)) {
+						return 0;
+					}
+					brother.nodeIndexLast = i++;
 				}
-				i++;
-			}
+			} while (brother = brother.previousSibling);
+			return 1;
 		}
-		return 1;
 	},
 /*
 Rrom w3.org: "an E element that has no children (including text nodes)".
@@ -377,7 +374,7 @@ Thx to John, from Sizzle, 2008-12-05, line 416
 		},
 /* from w3.org: "an E element, only child of its parent" */
 	'only-child': function (child) {
-			return child.parentNode.getElementsByTagName('*').length != 1;
+			return child.parentNode.getElementsByTagName('*').length !== 1;
 		},
 /*
 from w3.org: "a user interface element E which is checked
