@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 18:20:40 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 258 $
+* $Date: 2008-12-28 18:25:41 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 259 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -328,7 +328,7 @@ _.modificators = {
 				if (brother.nodeType === 1) {
 
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = i++) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
+					if ((brother.nodeIndex = ++i) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
 						return 0;
 					}
 				}
@@ -354,7 +354,7 @@ counting from the last one"
 			do {
 				if (brother.nodeType === 1) {
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = i++) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
+					if ((brother.nodeIndex = ++i) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
 						return 0;
 					}
 				}
