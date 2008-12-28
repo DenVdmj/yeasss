@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.2.9 - The fastest CSS selectors JavaScript library
+* YASS 0.3.0 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 18:25:41 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 259 $
+* $Date: 2008-12-28 19:36:42 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 261 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -74,7 +74,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
 */
-						var tag = single[1],
+						var tag = single[1] || '*',
 							id = single[2],
 							klass = single[3],
 							attr = single[4],
@@ -89,9 +89,9 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 							newNodes = [],
 /* length of root nodes */
 							J = 0,
-/* iterator of return array, equals to its length */
-							idx = 0,
-							node;
+							node,
+/* if we need to mark node with expando yeasss */
+							last = i == singles_length;
 /*
 if root is single -- just make it as an array. Local
 variables are faster.
@@ -99,33 +99,10 @@ variables are faster.
 						nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 						while (node = nodes[J++]) {
-							var h = 0,
-								child,
 /* find all TAGs or just return all possible neibours */
-								childs = _.ancestor[ancestor](node, tag || '*');
-							while (child = childs[h++]) {
-/*
-check them for ID or Class. Also check for expando 'yeasss'
-to filter non-selected elements. Typeof 'string' not added -
-if we get element with name="id" it won't be equal to given ID string.
-Also check for given attribute.
-Modificator is either not set in the selector, or just has been nulled
-by previous switch.
-Ancestor will return true for simple child-parent relationship.
-								*/
-								if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-/* 
-Need to define expando property to true for the last step.
-Then mark selected element with expando
-*/
-									if (i == singles_length) {
-										child.yeasss = 1;
-									}
-/* and add to result array */
-									newNodes[idx++] = child;
-								}
-							}
+							newNodes = _.ancestor[ancestor](node, tag, id, klass, attr, value, modificator, ind, newNodes, last);
 						}
+						var idx = newNodes.length;
 /* put selected nodes in local nodes' set */
 						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
 					} else {
@@ -148,7 +125,7 @@ Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
 */
 			while (idx--) {
-				sets[idx].yeasss = null;
+				sets[idx].yeasss = sets[idx].nodeIndex = sets[idx].nodeIndexLast = null;
 			}
 		}
 	}
@@ -249,15 +226,47 @@ Return correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
 _.ancestor = {
+/* from w3.org: "an F element descendant of an E element" */
+	" ":
+		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
+			var nodes = child.getElementsByTagName(tag),
+				node,
+				h = 0,
+				idx = newNodes.length;
+			while (node = nodes[h++]) {
+/*
+check them for ID or Class. Also check for expando 'yeasss'
+to filter non-selected elements. Typeof 'string' not added -
+if we get element with name="id" it won't be equal to given ID string.
+Also check for given attribute.
+Modificator is either not set in the selector, or just has been nulled
+by previous switch.
+Ancestor will return true for simple child-parent relationship.
+*/
+				if ((!id || (id && node.id === id)) && (!klass || (klass && node.className.match(klass))) && (!attr || (attr && node[attr] && (!value || node[attr] === value)) || (attr === 'class' && node.className.match(value))) && !node.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](node, ind) : modificator))) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+					if (last) {
+						node.yeasss = 1;
+					}
+					newNodes[idx++] = node;
+				}
+			}
+			return newNodes;
+		},
 /* from w3.org: "an F element preceded by an E element" */
 	"~":
-		function (child, tag) {
-			var newNodes = [],
-				idx = 0;
+		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
+			var idx = newNodes.length;
 			tag = tag.toLowerCase();
 /* don't touch already selected elements */
 			while ((child = child.nextSibling) && !child.yeasss) {
-				if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag)) {
+				if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+					if (last) {
+						child.yeasss = 1;
+					}
 					newNodes[idx++] = child;
 				}
 			}
@@ -265,29 +274,27 @@ _.ancestor = {
 		},
 /* from w3.org: "an F element immediately preceded by an E element" */
 	"+":
-		function (child, tag) {
+		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
 			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			return child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') ? [child] : [];
+			newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || child : null;
+			return newNodes;
 		},
 /* from w3.org: "an F element child of an E element" */
 	">":
-		function (child, tag) {
+		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
 			var nodes = child.getElementsByTagName(tag),
 				i = 0,
-				idx = 0,
-				node,
-				newNodes = [];
+				idx = newNodes.length,
+				node;
 			while (node = nodes[i++]) {
-				if (node.parentNode === child) {
+				if (node.parentNode === child && (!id || (id && node.id === id)) && (!klass || (klass && node.className.match(klass))) && (!attr || (attr && node[attr] && (!value || node[attr] === value)) || (attr === 'class' && node.className.match(value))) && !node.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](node, ind) : modificator))) {
+					if (last) {
+						node.yeasss = 1;
+					}
 					newNodes[idx++] = node;
 				}
 			}
 			return newNodes;
-		},
-/* from w3.org: "an F element descendant of an E element" */
-	" ":
-		function (child, tag) {
-			return child.getElementsByTagName(tag);
 		}
 };
 /*
@@ -320,13 +327,11 @@ _.modificators = {
 		if (i) {
 			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
 		} else {
-			i++;
 /* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
 /* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
-
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
 					if ((brother.nodeIndex = ++i) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
 						return 0;
@@ -347,7 +352,6 @@ counting from the last one"
 		if (i) {
 			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
 		} else {
-			i++;
 /* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
 /* looping in child to find if nth expression is correct */
