@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-25 14:25:37 +3000 (Thu, 25 Dec 2008) $
-* $Rev: 247 $
+* $Date: 2008-12-28 11:48:37 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 251 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -317,45 +317,53 @@ _.modificators = {
 from w3.org: "an E element, the n-th child of its parent"
 */
 	'nth-child': function (child, ind) {
-			ind = ind.replace(/even/,"2n").replace(/odd/,"2n+1");
-/* check if we need computation */
-			if (ind.indexOf('n') !== -1) {
-/* add multiplying for short form, % changes to + */
-				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
-				var brothers = child.parentNode.getElementsByTagName('*'),
-					n = brothers.length - 1;
-/* looping in child to find if nth expression is correct */
-				while (n--) {
-					if (brothers[eval(ind)] === child) {
-						return 0;
-					}
-				}
-				return 1;
+/* add multiplying for short form, reverse logic for n */
+		ind = ind.replace(/even/,"2n").replace(/odd/,"2n%1").replace(/n\s*-/,"n+").replace(/n\s*%/,"n-").replace(/(.*)n(.*)?/,"(i$2)%$1");
+		var i = 1,
+			brother = child.parentNode.firstChild;
+		if (brother.nodeType === 1) {
+			if (brother === child && !eval(ind)) {
+				return 0;
 			}
-			return child.parentNode.getElementsByTagName('*')[ind] !== child;
-		},
+			i++;
+		}
+/* looping in child to find if nth expression is correct */
+		while (brother = brother.nextSibling) {
+			if (brother.nodeType === 1) {
+				if (child === brother && !eval(ind)) {
+					return 0;
+				}
+				i++;
+			}
+		}
+		return 1;
+	},
 /*
 from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
-			ind = ind.replace(/even/,"2n").replace(/odd/,"2n+1");
-			var brothers = child.parentNode.getElementsByTagName('*'),
-				n = brothers.length - 1;
-/* check if we need computation */
-			if (ind.indexOf('n') !== -1) {
-/* add multiplying for short form, % changes to + */
-				ind = ind.replace(/%/,"+").replace(/([0-9])n/,"$1*n");
-/* looping in child to find if nth expression is correct */
-				while (n--) {
-					if (brothers[n - eval(ind)] === child) {
-						return 0;
-					}
-				}
-				return 1;
+/* add multiplying for short form, reverse logic for n */
+		ind = ind.replace(/even/,"2n").replace(/odd/,"2n%1").replace(/n\s*-/,"n+").replace(/n\s*%/,"n-").replace(/(.*)n(.*)?/,"(i$2)%$1");
+		var i = 1,
+			brother = child.parentNode.lastChild;
+		if (brother.nodeType === 1) {
+			if (brother === child && !eval(ind)) {
+				return 0;
 			}
-			return brothers[n - ind] !== child;
-		},
+			i++;
+		}
+/* looping in child to find if nth expression is correct */
+		while (brother = brother.previousSibling) {
+			if (brother.nodeType === 1) {
+				if (child === brother && !eval(ind)) {
+					return 0;
+				}
+				i++;
+			}
+		}
+		return 1;
+	},
 /*
 Rrom w3.org: "an E element that has no children (including text nodes)".
 Thx to John, from Sizzle, 2008-12-05, line 416
