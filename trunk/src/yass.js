@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 17:47:40 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 259 $
+* $Date: 2008-12-28 18:20:40 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 258 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -84,7 +84,7 @@ tag, id, class, attribute, value, modificator, index.
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7] ? single[7] : 0,
+							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7],
 /* new nodes array */
 							newNodes = [],
 /* length of root nodes */
@@ -110,10 +110,10 @@ to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
 Also check for given attribute.
 Modificator is either not set in the selector, or just has been nulled
-by previous switch. Reverse logic for nth siblings (ind).
+by previous switch.
 Ancestor will return true for simple child-parent relationship.
-*/
-								if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind[0] ? "(i" + (ind[3] ? ((ind[2] === '%' ? "-" : "+") + ind[3]) : '') + ")%" + ind[1] : ind) : modificator))) {
+								*/
+								if ((!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -318,14 +318,17 @@ _.modificators = {
 		var i = child.nodeIndex || 0;
 /* check if we have already looked into siblings, using exando - very bad */
 		if (i) {
-			return eval(ind);
+			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
 		} else {
+			i++;
+/* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
 /* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
+
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = (i++)+1) && child === brother && !eval(ind)) {
+					if ((brother.nodeIndex = i++) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
 						return 0;
 					}
 				}
@@ -338,19 +341,24 @@ from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
+/* almost the same as the previous one */
 		var i = child.nodeIndexLast || 0;
 /* check if we have already looked into siblings, using exando - very bad */
 		if (i) {
-			return eval(ind);
+			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
 		} else {
-			var brother = child.parentNode.lastChild;
+			i++;
+/* in the other case just reverse logic for n and loop siblings */
+			var brother = child.parentNode.firstChild;
+/* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
-					if ((brother.nodeIndexLast = (i++)+1) && child === brother && !eval(ind)) {
+/* nodeIndex expando used from Peppy / Sizzle/ jQuery */
+					if ((brother.nodeIndex = i++) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
 						return 0;
 					}
 				}
-			} while (brother = brother.previousSibling);
+			} while (brother = brother.nextSibling);
 			return 1;
 		}
 	},
