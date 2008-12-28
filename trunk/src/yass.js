@@ -92,7 +92,6 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 /* iterator of return array, equals to its length */
 							idx = 0,
 							node;
-							alert(ind);
 /*
 if root is single -- just make it as an array. Local
 variables are faster.
