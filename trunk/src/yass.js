@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 16:54:38 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 255 $
+* $Date: 2008-12-28 17:16:39 +3000 (Sun, 28 Dec 2008) $
+* $Rev: 257 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -84,7 +84,7 @@ tag, id, class, attribute, value, modificator, index.
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)\d*)?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n+1" || !/\D/.test(single[7]) && "0n+" + single[7] || single[7]) : single[7],
+							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7],
 /* new nodes array */
 							newNodes = [],
 /* length of root nodes */
@@ -92,6 +92,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 /* iterator of return array, equals to its length */
 							idx = 0,
 							node;
+							alert(ind);
 /*
 if root is single -- just make it as an array. Local
 variables are faster.
@@ -313,26 +314,23 @@ _.modificators = {
 	'root': function (child) {
 			return child.nodeName.toLowerCase() !== 'html';
 		},
-/*
-from w3.org: "an E element, the n-th child of its parent"
-*/
+/* from w3.org: "an E element, the n-th child of its parent" */
 	'nth-child': function (child, ind) {
-/* check if already looked into siblings, using exando - very bad */
+/* check if we have already looked into siblings, using exando - very bad */
 		if (child.nodeIndex) {
 			return !( (child.nodeIndex + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
 		} else {
 /* in the other case just reverse logic for n and loop siblings */
 			ind = "(i" + (ind[3] ? (ind[2] === '%' ? -1 : 1)*ind[3] : '') + ")%" + ind[1];
-			var i = 1,
+			var i = 0,
 				brother = child.parentNode.firstChild;
 /* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
-					if (child === brother && !eval(ind)) {
+/* nodeIndex expando used from Peppy / Sizzle/ jQuery */
+					if ((brother.nodeIndex = i++) && child === brother && !eval(ind)) {
 						return 0;
 					}
-/* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					brother.nodeIndex = i++;
 				}
 			} while (brother = brother.nextSibling);
 			return 1;
@@ -343,19 +341,18 @@ from w3.org: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
-/* lamost the same as previous one */
+/* almost the same as the previous one */
 		if (child.nodeIndexLast) {
 			return !( (child.nodeIndexLast + (ind[2] === '%' ? -1 : 1) * ind[3]) % ind[1]);
 		} else {
 			ind = "(i" + (ind[2] === '%' ? -1 : 1)*ind[3] + ")%" + ind[1];
-			var i = 1,
+			var i = 0,
 				brother = child.parentNode.lastChild;
 			do {
 				if (brother.nodeType === 1) {
-					if (child === brother && !eval(ind)) {
+					if ((brother.nodeIndexLast = i++) && child === brother && !eval(ind)) {
 						return 0;
 					}
-					brother.nodeIndexLast = i++;
 				}
 			} while (brother = brother.previousSibling);
 			return 1;
