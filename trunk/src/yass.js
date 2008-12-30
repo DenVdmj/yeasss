@@ -323,9 +323,10 @@ _.modificators = {
 /* from w3.org: "an E element, the n-th child of its parent" */
 	'nth-child': function (child, ind) {
 		var i = child.nodeIndex || 0;
+		ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0;
 /* check if we have already looked into siblings, using exando - very bad */
 		if (i) {
-			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
+			return !( (i + ind[3]) % ind[1]);
 		} else {
 /* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
@@ -333,7 +334,7 @@ _.modificators = {
 			do {
 				if (brother.nodeType === 1) {
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = ++i) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
+					if ((brother.nodeIndex = ++i) && child === brother && ((i + ind[3]) % ind[1])) {
 						return 0;
 					}
 				}
@@ -348,17 +349,14 @@ counting from the last one"
 	'nth-last-child': function (child, ind) {
 /* almost the same as the previous one */
 		var i = child.nodeIndexLast || 0;
-/* check if we have already looked into siblings, using exando - very bad */
+		ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0;
 		if (i) {
-			return !( (i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1]);
+			return !( (i + ind[3]) % ind[1]);
 		} else {
-/* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
-/* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
-/* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = ++i) && child === brother && ((i + (ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0)) % ind[1])) {
+					if ((brother.nodeIndex = ++i) && child === brother && ((i + ind[3]) % ind[1])) {
 						return 0;
 					}
 				}
