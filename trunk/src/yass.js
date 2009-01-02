@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-02 17:20:47 +3000 (Fri, 02 Jan 2009) $
-* $Rev: 274 $
+* $Date: 2008-01-02 17:40:48 +3000 (Fri, 02 Jan 2009) $
+* $Rev: 276 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -22,7 +22,7 @@ _.main = function (selector, root) {
 /* sets of nodes, to handle comma-separated selectors */
 	var sets;
 /* quick return or generic call */
-	if (/^(.)[\w\]]+$/.exec(selector)) {
+	if (/^(.)[\w\]~*^|=]+$/.exec(selector)) {
 /*
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
@@ -89,16 +89,18 @@ So loop in given elements to find the correct one
 				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
 				break;
 			case '[':
+				selector = /\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector);
 				var nodes = root.getElementsByTagName('*'),
 					node,
 					i = 0,
-					attr = selector.replace(/\[([^=]+)=?.*\]/,"$1"),
-					value = selector.replace(/\[[^=]+(?:=([^\]]+))?\]/,"$1"),
 					newNodes = [],
-					idx = 0;
+					idx = 0,
+					attr = selector[1],
+					eql = selector[2] || "",
+					value = selector[3];
 				while (node = nodes[i++]) {
 /* check either attr is defined for given node or it's equal to give value */
-					if (node[attr] && (!value || node[attr] === value || (attr === 'class' && node.className.match(value)))) {
+					if (_.attr[eql] && _.attr[eql](node, attr, value)) {
 						newNodes[idx++] = node;
 					}
 				}
@@ -163,7 +165,7 @@ tag, id, class, attribute, value, modificator, index.
 							id = single[2],
 							klass = single[3],
 							attr = single[4],
-							eql = single[5],
+							eql = single[5] || "",
 							value = single[6],
 							modificator = single[7],
 /*
