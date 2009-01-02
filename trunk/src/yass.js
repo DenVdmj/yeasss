@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.3.0 - The fastest CSS selectors JavaScript library
+* YASS 0.3.1 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-02 00:48:45 +3000 (Fri, 02 Jan 2009) $
-* $Rev: 270 $
+* $Date: 2008-01-02 17:20:47 +3000 (Fri, 02 Jan 2009) $
+* $Rev: 274 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -154,7 +154,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 				while (single = singles[i++]) {
 /* hash for set of values is faster than simple RegExp */
 					if (!_.ancestors[single] && nodes) {
-						single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
+						single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -163,13 +163,14 @@ tag, id, class, attribute, value, modificator, index.
 							id = single[2],
 							klass = single[3],
 							attr = single[4],
-							value = single[5],
-							modificator = single[6],
+							eql = single[5],
+							value = single[6],
+							modificator = single[7],
 /*
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7],
+							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === "even" && "2n" || single[8] === "odd" && "2n%1" || !/\D/.test(single[8]) && "0n%" + single[8] || single[8]) : single[8],
 /* new nodes array */
 							newNodes = [],
 /* cached length of new nodes array */
@@ -178,7 +179,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 							J = 0,
 							child,
 /* if we need to mark node with expando yeasss */
-							last = i == singles_length;
+							last = i === singles_length;
 /*
 if root is single -- just make it as an array. Local
 variables are faster.
@@ -206,7 +207,7 @@ Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 Ancestor will return true for simple child-parent relationship.
 */
-										if ((!id || (id && item.id === id)) && (!klass || (klass && item.className.match(klass))) && (!attr || (attr && item[attr] && (!value || item[attr] === value)) || (attr === 'class' && item.className.match(value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if ((!id || (id && item.id === id)) && (!klass || item.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](item, attr === 'class' ? 'className' : attr, value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -223,7 +224,7 @@ Then mark selected element with expando
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || child.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](child, attr === 'class' ? 'className' : attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -234,7 +235,7 @@ Then mark selected element with expando
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case "+":
 									while ((child = child.nextSibling) && child.nodeType != 1) {}
-									newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || !(++idx) || child : null;
+									newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || child.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](child, attr === 'class' ? 'className' : attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || !(++idx) || child : null;
 									break;
 /* from w3.org: "an F element child of an E element" */
 								case ">":
@@ -242,7 +243,7 @@ Then mark selected element with expando
 										i = 0,
 										item;
 									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || (id && item.id === id)) && (!klass || (klass && item.className.match(klass))) && (!attr || (attr && item[attr] && (!value || item[attr] === value)) || (attr === 'class' && item.className.match(value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || item.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](item, attr === 'class' ? 'className' : attr, value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
 											if (last) {
 												item.yeasss = 1;
 											}
@@ -253,7 +254,7 @@ Then mark selected element with expando
 							}
 						}
 /* put selected nodes in local nodes' set */
-						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
+						nodes = idx ? idx === 1 ? newNodes[0] : newNodes : null;
 					} else {
 /* switch ancestor ( , > , ~ , +) */
 						ancestor = single;
@@ -296,6 +297,44 @@ _.ancestors = {
 _.nth = {
 	'nth-child': 1,
 	'nth-last-child': 1
+};
+/* function calls for CSS2/3 attributes selectors */
+_.attr = {
+/* an E element with a "attr" attribute */
+	"": function (child, attr) {
+		return !!child[attr];
+	},
+/* an E element whose "attr" attribute value is exactly equal to "value" */
+	"=": function (child, attr, value) {
+		return child[attr] && child[attr] === value;
+	},
+/*
+an E element whose "attr" attribute value is a list of space-separated
+values, one of which is exactly equal to "value"
+*/
+	"~=": function (child, attr, value) {
+		return child[attr] && (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") > -3);
+	},
+/* an E element whose "attr" attribute value begins exactly with the string "value" */
+	"^=": function (child, attr, value) {
+		return child[attr] && !!child[attr].indexOf(value);
+	},
+/* an E element whose "attr" attribute value ends exactly with the string "value" */
+	"$=": function (child, attr, value) {
+		return child[attr] && child[attr].indexOf(value) === child[attr].length - value.length;
+	},
+/* an E element whose "attr" attribute value contains the substring "value" */
+	"*=": function (child, attr, value) {
+		return child[attr] && child[attr].indexOf(value) !== -1;
+	},
+/*
+an E element whose "hreflang" attribute has a hyphen-separated
+list of values beginning (from the left) with "en"
+*/
+	"|=": function (child, attr, value) {
+		var i = child[attr];
+		return i && (i === value || !!i.indexOf(value+"-"));
+	}
 };
 /*
 function calls for CSS2/3 modificatos. Specification taken from
@@ -356,7 +395,7 @@ counting from the last one"
 			var brother = child.parentNode.firstChild;
 			do {
 				if (brother.nodeType === 1) {
-					if ((brother.nodeIndex = ++i) && child === brother && ((i + ind[3]) % ind[1])) {
+					if ((brother.nodeIndex = i++) && child === brother && ((i + ind[3]) % ind[1])) {
 						return 0;
 					}
 				}
