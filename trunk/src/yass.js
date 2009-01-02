@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-12-28 19:36:42 +3000 (Sun, 28 Dec 2008) $
-* $Rev: 261 $
+* $Date: 2008-01-02 00:48:45 +3000 (Fri, 02 Jan 2009) $
+* $Rev: 270 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -19,22 +19,106 @@ Return not cached result if root specified, thx to Skiv
 		return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
 };
 _.main = function (selector, root) {
-/* current sets of nodes, to handle comma-separated selectors */
-	var sets,
-/* first letter for quick switch in simple cases, a bit faster in Fx */
-		firstLetter;
+/* sets of nodes, to handle comma-separated selectors */
+	var sets;
 /* quick return or generic call */
-/* this place need to be refactored to reduce RegExps, but how? */
-	if (!(firstLetter = /^(.)\w+$/.exec(selector)) || !(sets = _.simple[firstLetter[1].replace(/[^\[:\.#]/,"%")](selector, root))) {
+	if (/^(.)[\w\]]+$/.exec(selector)) {
+/*
+some simple cases - only ID or only CLASS for the very first occurence
+- don't need additional checks. Switch works as a hash.
+*/
+		switch (RegExp.$1) {
+			case '#':
+				selector = selector.slice(1);
+				sets = _.doc.getElementById(selector);
+/*
+workaround with IE bug about returning element by name not by ID.
+Modified solution from
+http://deer.org.ua/2008/08/15/2/
+thx to deerua. Get all matching elements with this id
+*/
+				if (_.doc.all && sets.id !== selector && (sets = _.doc.all[selector])) {
+					var nodes_length = sets.length;
+/*
+if more than 1, choose first with the correct id.
+if we have the only element -- it's already in nodes.
+So loop in given elements to find the correct one
+*/
+					while (nodes_length--) {
+						var node = sets[nodes_length];
+						if (node.id === selector) {
+							sets = node;
+							nodes_length = 0;
+						}
+					}
+				}
+				break;
+			case '.':
+				selector = selector.slice(1);
+				var nodes,
+					idx = 0;
+				if (_.doc.getElementsByClassName) {
+					nodes = root.getElementsByClassName(selector);
+					idx = nodes.length;
+				} else {
+					var newNodes = root.getElementsByTagName('*'),
+						nodes = [],
+						i = 0,
+						node;
+					while (node = nodes[i++]) {
+						if (node.className.indexOf(selector) !== -1) {
+							nodes[idx++] = node;
+						}
+					}
+				}
+				sets = idx ? idx === 1 ? nodes[0] : nodes : null;
+				break;
+			case ':':
+				var nodes = root.getElementsByTagName('*'),
+					node,
+					i = 0,
+					newNodes = [],
+					idx = 0,
+					ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
+					selector = selector.replace(/\(.*/,"");
+				while (node = nodes[i++]) {
+					if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
+						newNodes[idx++] = node;
+					}
+				}
+				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
+				break;
+			case '[':
+				var nodes = root.getElementsByTagName('*'),
+					node,
+					i = 0,
+					attr = selector.replace(/\[([^=]+)=?.*\]/,"$1"),
+					value = selector.replace(/\[[^=]+(?:=([^\]]+))?\]/,"$1"),
+					newNodes = [],
+					idx = 0;
+				while (node = nodes[i++]) {
+/* check either attr is defined for given node or it's equal to give value */
+					if (node[attr] && (!value || node[attr] === value || (attr === 'class' && node.className.match(value)))) {
+						newNodes[idx++] = node;
+					}
+				}
+				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
+				break;
+			default:
+				var nodes = root.getElementsByTagName(selector);
+				sets = nodes.length === 1 ? nodes[0] : nodes;
+				break;
+		}
+	} else {
 /*
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
 		if (_.doc.querySelectorAll) {
 			sets = root.querySelectorAll(selector);
-/* call generic function for complicated selectors */
+/* generic function for complicated selectors */
 		} else {
-			/* number of groups to merge or not result arrays */
+/* number of groups to merge or not result arrays */
 			var groups_length = 0,
 /*
 groups of selectors separated by commas.
@@ -68,7 +152,8 @@ John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-					if (!_.ancestor[single] && nodes) {
+/* hash for set of values is faster than simple RegExp */
+					if (!_.ancestors[single] && nodes) {
 						single = /([^\s[:.#]+)?(?:#([^\s[:.#]+))?(?:\.([^\s[:.]+))?(?:\[([^\s[:=]+)=?([^\s:\]]+)?\])?(?:\:([^\s(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
@@ -84,12 +169,14 @@ tag, id, class, attribute, value, modificator, index.
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = /nth/.test(modificator) ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7],
+							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[7] === "even" && "2n" || single[7] === "odd" && "2n%1" || !/\D/.test(single[7]) && "0n%" + single[7] || single[7]) : single[7],
 /* new nodes array */
 							newNodes = [],
+/* cached length of new nodes array */
+							idx = 0,
 /* length of root nodes */
 							J = 0,
-							node,
+							child,
 /* if we need to mark node with expando yeasss */
 							last = i == singles_length;
 /*
@@ -98,11 +185,73 @@ variables are faster.
 */
 						nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
-						while (node = nodes[J++]) {
-/* find all TAGs or just return all possible neibours */
-							newNodes = _.ancestor[ancestor](node, tag, id, klass, attr, value, modificator, ind, newNodes, last);
+						while (child = nodes[J++]) {
+/*
+find all TAGs or just return all possible neibours.
+Find correct 'children' for given node. They can be
+direct childs, neighbours or something else.
+*/
+							switch (ancestor) {
+								case " ":
+									var childs = child.getElementsByTagName(tag),
+										item,
+										h = 0;
+									while (item = childs[h++]) {
+/*
+check them for ID or Class. Also check for expando 'yeasss'
+to filter non-selected elements. Typeof 'string' not added -
+if we get element with name="id" it won't be equal to given ID string.
+Also check for given attribute.
+Modificator is either not set in the selector, or just has been nulled
+by previous switch.
+Ancestor will return true for simple child-parent relationship.
+*/
+										if ((!id || (id && item.id === id)) && (!klass || (klass && item.className.match(klass))) && (!attr || (attr && item[attr] && (!value || item[attr] === value)) || (attr === 'class' && item.className.match(value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+/* 
+Need to define expando property to true for the last step.
+Then mark selected element with expando
+*/
+											if (last) {
+												item.yeasss = 1;
+											}
+											newNodes[idx++] = item;
+										}
+									}
+									break;
+/* from w3.org: "an F element preceded by an E element" */
+								case "~":
+									tag = tag.toLowerCase();
+/* don't touch already selected elements */
+									while ((child = child.nextSibling) && !child.yeasss) {
+										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+											if (last) {
+												child.yeasss = 1;
+											}
+											newNodes[idx++] = child;
+										}
+									}
+									break;
+/* from w3.org: "an F element immediately preceded by an E element" */
+								case "+":
+									while ((child = child.nextSibling) && child.nodeType != 1) {}
+									newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || !(++idx) || child : null;
+									break;
+/* from w3.org: "an F element child of an E element" */
+								case ">":
+									var childs = child.getElementsByTagName(tag),
+										i = 0,
+										item;
+									while (item = childs[i++]) {
+										if (item.parentNode === child && (!id || (id && item.id === id)) && (!klass || (klass && item.className.match(klass))) && (!attr || (attr && item[attr] && (!value || item[attr] === value)) || (attr === 'class' && item.className.match(value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+											if (last) {
+												item.yeasss = 1;
+											}
+											newNodes[idx++] = item;
+										}
+									}
+									break;
+							}
 						}
-						var idx = newNodes.length;
 /* put selected nodes in local nodes' set */
 						nodes = idx ? idx == 1 ? newNodes[0] : newNodes : null;
 					} else {
@@ -136,166 +285,17 @@ that must be nulled. Need this only to generic case
 _.cache = {};
 /* caching global document */
 _.doc = document;
-/*
-return some simple cases: only ID or only CLASS for the very
-first case: don't need additional checks
-*/
-_.simple = {
-/* return element by ID */
-	'#':
-		function (selector) {
-			var id = selector.slice(1),
-				nodes = _.doc.getElementById(id);
-/*
-workaround with IE bug about returning element by name not by ID.
-Modified solution from
-http://deer.org.ua/2008/08/15/2/
-thx to deerua. Get all matching elements with this id
-*/
-			if (_.doc.all && nodes.id !== id && (nodes = _.doc.all[id])) {
-				var nodes_length = nodes.length;
-/*
-if more than 1, choose first with the correct id.
-if we have the only element -- it's already in nodes.
-So ;oop in given elements to find the correct one
-*/
-				while (nodes_length--) {
-					var node = nodes[nodes_length];
-					if (node.id === id) {
-						nodes = node;
-						nodes_length = 0;
-					}
-				}
-			}
-			return nodes;
-		},
-/* return element by CLASS */
-	'.':
-		function (selector, root) {
-			if (_.doc.getElementsByClassName) {
-				var nodes = root.getElementsByClassName(selector.slice(1));
-				return nodes.length === 1 ? nodes[0] : nodes;
-			}
-			return null;
-		},
-/* return elements by TAG */
-	'%':
-		function (selector, root) {
-			var nodes = root.getElementsByTagName(selector);
-			return nodes.length === 1 ? nodes[0] : nodes;
-		},
-/* return elements by ATTR */
-	'[':
-		function (selector, root) {
-			var nodes = root.getElementsByTagName('*'),
-				node,
-				i = 0,
-				attr = selector.replace(/\[([^=]+)=?.*\]/,"$1"),
-				value = selector.replace(/\[[^=]+(?:=([^\]]+))?\]/,"$1"),
-				newNodes = [],
-				idx = 0;
-			while (node = nodes[i++]) {
-/* check either attr is defined for given node or it's equal to give value */
-				if (node[attr] && (!value || node[attr] === value || (attr === 'class' && node.className.match(value)))) {
-					newNodes[idx++] = node;
-				}
-			}
-			return idx ? idx > 1 ? newNodes : newNodes[0] : null;
-		},
-/* return elements by MODIFICATOR */
-	':':
-		function (selector, root) {
-			var nodes = root.getElementsByTagName('*'),
-				node,
-				i = 0,
-				newNodes = [],
-				idx = 0,
-				ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
-				selector = selector.replace(/\(.*/,"");
-			while (node = nodes[i++]) {
-				if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
-					newNodes[idx++] = node;
-				}
-			}
-			return idx ? idx > 1 ? newNodes : newNodes[0] : null;
-		}
+/* hash to check ancestors' selectors */
+_.ancestors = {
+	" ": 1,
+	"+": 1,
+	">": 1,
+	"~": 1
 };
-/*
-function calls for CSS2 ancestor modificators.
-Return correct 'children' for given node. They can be
-direct childs, neighbours or something else.
-*/
-_.ancestor = {
-/* from w3.org: "an F element descendant of an E element" */
-	" ":
-		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
-			var nodes = child.getElementsByTagName(tag),
-				node,
-				h = 0,
-				idx = newNodes.length;
-			while (node = nodes[h++]) {
-/*
-check them for ID or Class. Also check for expando 'yeasss'
-to filter non-selected elements. Typeof 'string' not added -
-if we get element with name="id" it won't be equal to given ID string.
-Also check for given attribute.
-Modificator is either not set in the selector, or just has been nulled
-by previous switch.
-Ancestor will return true for simple child-parent relationship.
-*/
-				if ((!id || (id && node.id === id)) && (!klass || (klass && node.className.match(klass))) && (!attr || (attr && node[attr] && (!value || node[attr] === value)) || (attr === 'class' && node.className.match(value))) && !node.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](node, ind) : modificator))) {
-/* 
-Need to define expando property to true for the last step.
-Then mark selected element with expando
-*/
-					if (last) {
-						node.yeasss = 1;
-					}
-					newNodes[idx++] = node;
-				}
-			}
-			return newNodes;
-		},
-/* from w3.org: "an F element preceded by an E element" */
-	"~":
-		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
-			var idx = newNodes.length;
-			tag = tag.toLowerCase();
-/* don't touch already selected elements */
-			while ((child = child.nextSibling) && !child.yeasss) {
-				if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
-					if (last) {
-						child.yeasss = 1;
-					}
-					newNodes[idx++] = child;
-				}
-			}
-			return newNodes;
-		},
-/* from w3.org: "an F element immediately preceded by an E element" */
-	"+":
-		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
-			while ((child = child.nextSibling) && child.nodeType != 1) {}
-			newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || (id && child.id === id)) && (!klass || (klass && child.className.match(klass))) && (!attr || (attr && child[attr] && (!value || child[attr] === value)) || (attr === 'class' && child.className.match(value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || child : null;
-			return newNodes;
-		},
-/* from w3.org: "an F element child of an E element" */
-	">":
-		function (child, tag, id, klass, attr, value, modificator, ind, newNodes, last) {
-			var nodes = child.getElementsByTagName(tag),
-				i = 0,
-				idx = newNodes.length,
-				node;
-			while (node = nodes[i++]) {
-				if (node.parentNode === child && (!id || (id && node.id === id)) && (!klass || (klass && node.className.match(klass))) && (!attr || (attr && node[attr] && (!value || node[attr] === value)) || (attr === 'class' && node.className.match(value))) && !node.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](node, ind) : modificator))) {
-					if (last) {
-						node.yeasss = 1;
-					}
-					newNodes[idx++] = node;
-				}
-			}
-			return newNodes;
-		}
+/* hash to check nth-childs modificators */
+_.nth = {
+	'nth-child': 1,
+	'nth-last-child': 1
 };
 /*
 function calls for CSS2/3 modificatos. Specification taken from
