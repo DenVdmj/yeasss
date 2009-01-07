@@ -1,13 +1,13 @@
 (function(){
 /*
-* YASS 0.3.1 - The fastest CSS selectors JavaScript library
+* YASS 0.3.2 - The fastest CSS selectors JavaScript library
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-07 14:19:50 +3000 (Wed, 07 Jan 2009) $
-* $Rev: 279 $
+* $Date: 2008-01-07 14:35:51 +3000 (Wed, 07 Jan 2009) $
+* $Rev: 280 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -29,15 +29,15 @@ some simple cases - only ID or only CLASS for the very first occurence
 */
 		switch (RegExp.$1) {
 			case '#':
-				selector = selector.slice(1);
-				sets = _.doc.getElementById(selector);
+				var id = selector.slice(1);
+				sets = _.doc.getElementById(id);
 /*
 workaround with IE bug about returning element by name not by ID.
 Modified solution from
 http://deer.org.ua/2008/08/15/2/
 thx to deerua. Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== selector && (sets = _.doc.all[selector])) {
+				if (_.doc.all && sets.id !== id && (sets = _.doc.all[id])) {
 					var nodes_length = sets.length;
 /*
 if more than 1, choose first with the correct id.
@@ -46,7 +46,7 @@ So loop in given elements to find the correct one
 */
 					while (nodes_length--) {
 						var node = sets[nodes_length];
-						if (node.id === selector) {
+						if (node.id === id) {
 							sets = node;
 							nodes_length = 0;
 						}
@@ -58,16 +58,17 @@ So loop in given elements to find the correct one
 					newNodes = [];
 				switch (RegExp.$1) {
 					case '.':
-						selector = selector.slice(1);
+						var klass = selector.slice(1);
 						if (_.doc.getElementsByClassName) {
-							newNodes = root.getElementsByClassName(selector);
+							newNodes = root.getElementsByClassName(klass);
 							idx = newNodes.length;
 						} else {
 							var nodes = root.getElementsByTagName('*'),
 								i = 0,
 								node;
 							while (node = nodes[i++]) {
-								if (node.className.indexOf(selector) !== -1) {
+								var local = node.className;
+								if (local === klass || "/ "+klass+"$/".test(local) || "/^"+klass+" /".test(local)) {
 									newNodes[idx++] = node;
 								}
 							}
@@ -78,21 +79,21 @@ So loop in given elements to find the correct one
 							nodes = root.getElementsByTagName('*'),
 							i = 0,
 							ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
-							selector = selector.replace(/\(.*/,"");
+							modificator = selector.replace(/\(.*/,"");
 						while (node = nodes[i++]) {
-							if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
+							if (_.modificator[modificator] && !_.modificator[modificator](node, ind)) {
 								newNodes[idx++] = node;
 							}
 						}
 						break;
 					case '[':
-						selector = /\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector);
 						var nodes = root.getElementsByTagName('*'),
 							node,
 							i = 0,
-							attr = selector[1],
-							eql = selector[2] || "",
-							value = selector[3];
+							attrs = /\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector),
+							attr = attrs[1],
+							eql = attrs[2] || "",
+							value = attrs[3];
 						while (node = nodes[i++]) {
 /* check either attr is defined for given node or it's equal to give value */
 							if (_.attr[eql] && _.attr[eql](node, attr, value)) {
@@ -232,7 +233,7 @@ Then mark selected element with expando
 									break;
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case "+":
-									while ((child = child.nextSibling) && child.nodeType != 1) {}
+									while ((child = child.nextSibling) && child.nodeType !== 1) {}
 									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || child.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](child, attr === 'class' ? 'className' : attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 										if (last) {
 											child.yeasss = 1;
