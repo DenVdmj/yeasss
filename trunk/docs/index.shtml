@@ -22,6 +22,11 @@
 <li>attribute queries:<ul>
 <li><code>[type=checkbox]</code> attribute value exact match,</li>
 <li><code>[title]</code> attribute presence selector,</li>
+<li><code>[rel~=nofollow]</code> attribute value list item match,</li>
+<li><code>[class^=block]</code> attribute start match,</li>
+<li><code>[class$=hidden]</code> attribute end match,</li>
+<li><code>[alt*=image]</code> attribute substring match,</li>
+<li><code>[alt!=image]</code> attribute value list item negative match,</li>
 </ul></li>
 <li><code>:first-child</code>, <code>:last-child</code> positional selectors,</li>
 <li><code>:empty</code> content empty selector,</li>
@@ -39,15 +44,8 @@
 <p>Some of the selectors are not supported yet. Maybe they will be handled by the next versions of YASS.</p>
 
 <ul>
-
-<li>Some of CSS2 defined selectors, i.e.
-<ul>
-<li><code>[rel~=nofollow]</code> attribute value list item match,</li>
-<li><code>[class^=block]</code> attribute start match,</li>
-<li><code>[class$=hidden]</code> attribute end match,</li>
-<li><code>[alt*=image]</code> attribute substring match,</li>
-</ul></li>
 <li><code>:not(...)</code> negation pseudo selectors</li>
+<li>multiple selectors <code>[class=class1][class=class2]</code></li>
 </ul>
 
 <!--#include virtual="/includes/bottom.shtml" -->
