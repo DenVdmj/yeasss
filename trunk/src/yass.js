@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-07 14:35:51 +3000 (Wed, 07 Jan 2009) $
-* $Rev: 280 $
+* $Date: 2008-01-07 14:44:52 +3000 (Wed, 07 Jan 2009) $
+* $Rev: 281 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -321,7 +321,7 @@ a list of space-separated values, one of which is exactly
 equal to "value"
 */
 	"~=": function (child, attr, value) {
-		return child[attr] && (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") > -3);
+		return child[attr] && (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") !== -3);
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value
@@ -352,6 +352,10 @@ left) with "value"
 	"|=": function (child, attr, value) {
 		var i = child[attr];
 		return i && (i === value || !!i.indexOf(value+"-"));
+	},
+/* attr doesn't contain given value */
+	"!=": function (child, attr, value) {
+		return !child[attr] || (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") === -3);
 	}
 };
 /*
@@ -387,6 +391,7 @@ _.modificators = {
 		} else {
 /* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
+			i++;
 /* looping in child to find if nth expression is correct */
 			do {
 				if (brother.nodeType === 1) {
@@ -411,6 +416,7 @@ counting from the last one"
 			return !( (i + ind[3]) % ind[1]);
 		} else {
 			var brother = child.parentNode.firstChild;
+			i++;
 			do {
 				if (brother.nodeType === 1) {
 					if ((brother.nodeIndex = i++) && child === brother && ((i + ind[3]) % ind[1])) {
