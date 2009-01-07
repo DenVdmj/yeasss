@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-02 17:40:48 +3000 (Fri, 02 Jan 2009) $
-* $Rev: 276 $
+* $Date: 2008-01-06 13:13:49 +3000 (Tue, 06 Jan 2009) $
+* $Rev: 278 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -21,8 +21,8 @@ Return not cached result if root specified, thx to Skiv
 _.main = function (selector, root) {
 /* sets of nodes, to handle comma-separated selectors */
 	var sets;
-/* quick return or generic call */
-	if (/^(.)[\w\]~*^|=]+$/.exec(selector)) {
+/* quick return or generic call, missed ~ in attributes selector */
+	if (/^(.)[\w\]*^|=]+$/.exec(selector)) {
 /*
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
@@ -53,62 +53,59 @@ So loop in given elements to find the correct one
 					}
 				}
 				break;
-			case '.':
-				selector = selector.slice(1);
-				var nodes,
-					idx = 0;
-				if (_.doc.getElementsByClassName) {
-					nodes = root.getElementsByClassName(selector);
-					idx = nodes.length;
-				} else {
-					var newNodes = root.getElementsByTagName('*'),
-						nodes = [],
-						i = 0,
-						node;
-					while (node = nodes[i++]) {
-						if (node.className.indexOf(selector) !== -1) {
-							nodes[idx++] = node;
-						}
-					}
-				}
-				sets = idx ? idx === 1 ? nodes[0] : nodes : null;
-				break;
-			case ':':
-				var nodes = root.getElementsByTagName('*'),
-					node,
-					i = 0,
-					newNodes = [],
-					idx = 0,
-					ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
-					selector = selector.replace(/\(.*/,"");
-				while (node = nodes[i++]) {
-					if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
-						newNodes[idx++] = node;
-					}
-				}
-				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
-				break;
-			case '[':
-				selector = /\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector);
-				var nodes = root.getElementsByTagName('*'),
-					node,
-					i = 0,
-					newNodes = [],
-					idx = 0,
-					attr = selector[1],
-					eql = selector[2] || "",
-					value = selector[3];
-				while (node = nodes[i++]) {
-/* check either attr is defined for given node or it's equal to give value */
-					if (_.attr[eql] && _.attr[eql](node, attr, value)) {
-						newNodes[idx++] = node;
-					}
-				}
-				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
-				break;
 			default:
-				var nodes = root.getElementsByTagName(selector);
-				sets = nodes.length === 1 ? nodes[0] : nodes;
+				var idx = 0,
+					newNodes = [];
+				switch (RegExp.$1) {
+					case '.':
+						selector = selector.slice(1);
+						if (_.doc.getElementsByClassName) {
+							newNodes = root.getElementsByClassName(selector);
+							idx = newNodes.length;
+						} else {
+							var nodes = root.getElementsByTagName('*'),
+								i = 0,
+								node;
+							while (node = nodes[i++]) {
+								if (node.className.indexOf(selector) !== -1) {
+									newNodes[idx++] = node;
+								}
+							}
+						}
+						break;
+					case ':':
+						var node,
+							nodes = root.getElementsByTagName('*'),
+							i = 0,
+							ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
+							selector = selector.replace(/\(.*/,"");
+						while (node = nodes[i++]) {
+							if (_.modificator[selector] && !_.modificator[selector](node, ind)) {
+								newNodes[idx++] = node;
+							}
+						}
+						break;
+					case '[':
+						selector = /\[([^~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector);
+						var nodes = root.getElementsByTagName('*'),
+							node,
+							i = 0,
+							attr = selector[1],
+							eql = selector[2] || "",
+							value = selector[3];
+						while (node = nodes[i++]) {
+/* check either attr is defined for given node or it's equal to give value */
+							if (_.attr[eql] && _.attr[eql](node, attr, value)) {
+								newNodes[idx++] = node;
+							}
+						}
+						break;
+					default:
+						newNodes = root.getElementsByTagName(selector);
+						idx = newNodes.length;
+						break;
+				}
+				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
 				break;
 		}
 	} else {
@@ -204,10 +201,9 @@ direct childs, neighbours or something else.
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
-Also check for given attribute.
+Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by previous switch.
-Ancestor will return true for simple child-parent relationship.
 */
 										if ((!id || (id && item.id === id)) && (!klass || item.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](item, attr === 'class' ? 'className' : attr, value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
 /* 
@@ -302,36 +298,50 @@ _.nth = {
 };
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
-/* an E element with a "attr" attribute */
+/* from w3.org "an E element with a "attr" attribute" */
 	"": function (child, attr) {
 		return !!child[attr];
 	},
-/* an E element whose "attr" attribute value is exactly equal to "value" */
+/*
+from w3.org "an E element whose "attr" attribute value is
+exactly equal to "value"
+*/
 	"=": function (child, attr, value) {
 		return child[attr] && child[attr] === value;
 	},
 /*
-an E element whose "attr" attribute value is a list of space-separated
-values, one of which is exactly equal to "value"
+from w3.prg "an E element whose "attr" attribute value is
+a list of space-separated values, one of which is exactly
+equal to "value"
 */
 	"~=": function (child, attr, value) {
 		return child[attr] && (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") > -3);
 	},
-/* an E element whose "attr" attribute value begins exactly with the string "value" */
+/*
+from w3.prg "an E element whose "attr" attribute value
+begins exactly with the string "value"
+*/
 	"^=": function (child, attr, value) {
 		return child[attr] && !!child[attr].indexOf(value);
 	},
-/* an E element whose "attr" attribute value ends exactly with the string "value" */
+/*
+from w3.org "an E element whose "attr" attribute value
+ends exactly with the string "value"
+*/
 	"$=": function (child, attr, value) {
 		return child[attr] && child[attr].indexOf(value) === child[attr].length - value.length;
 	},
-/* an E element whose "attr" attribute value contains the substring "value" */
+/*
+from w3.org "an E element whose "attr" attribute value
+contains the substring "value"
+*/
 	"*=": function (child, attr, value) {
 		return child[attr] && child[attr].indexOf(value) !== -1;
 	},
 /*
-an E element whose "hreflang" attribute has a hyphen-separated
-list of values beginning (from the left) with "en"
+from w3.org "an E element whose "attr" attribute has
+a hyphen-separated list of values beginning (from the
+left) with "value"
 */
 	"|=": function (child, attr, value) {
 		var i = child[attr];
@@ -341,7 +351,7 @@ list of values beginning (from the left) with "en"
 /*
 function calls for CSS2/3 modificatos. Specification taken from
 http://www.w3.org/TR/2005/WD-css3-selectors-20051215/
-in success return negative result.
+on success return negative result.
 */
 _.modificators = {
 /* from w3.org: "an E element, first child of its parent" */
