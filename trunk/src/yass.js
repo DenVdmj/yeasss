@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-06 13:13:49 +3000 (Tue, 06 Jan 2009) $
-* $Rev: 278 $
+* $Date: 2008-01-07 14:19:50 +3000 (Wed, 07 Jan 2009) $
+* $Rev: 279 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -233,7 +233,12 @@ Then mark selected element with expando
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case "+":
 									while ((child = child.nextSibling) && child.nodeType != 1) {}
-									newNodes[newNodes.length] = (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || child.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](child, attr === 'class' ? 'className' : attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) ? !(child.yeasss = 1) || !(++idx) || child : null;
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || child.className.indexOf(klass) !== -1) && (!attr || (_.attr[eql] && _.attr[eql](child, attr === 'class' ? 'className' : attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+										if (last) {
+											child.yeasss = 1;
+										}
+										newNodes[idx++] = child;
+									}
 									break;
 /* from w3.org: "an F element child of an E element" */
 								case ">":
