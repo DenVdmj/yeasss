@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-07 14:53:52 +3000 (Wed, 07 Jan 2009) $
-* $Rev: 283 $
+* $Date: 2008-01-07 21:04:53 +3000 (Wed, 07 Jan 2009) $
+* $Rev: 285 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -16,13 +16,13 @@ Subtree added, second argument, thx to tenshi.
 Return cache if exists. Third argument.
 Return not cached result if root specified, thx to Skiv
 */
-		return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
+	return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
 };
 _.main = function (selector, root) {
 /* sets of nodes, to handle comma-separated selectors */
 	var sets;
 /* quick return or generic call, missed ~ in attributes selector */
-	if (/^(.)[\w\]*^|=]+$/.exec(selector)) {
+	if (/^(.)[\w\]*^|=!]+$/.exec(selector)) {
 /*
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
@@ -67,8 +67,10 @@ So loop in given elements to find the correct one
 								i = 0,
 								node;
 							while (node = nodes[i++]) {
-								var local = node.className;
-								if (local === klass || "/ "+klass+"$/".test(local) || "/^"+klass+" /".test(local)) {
+								var local = node.className,
+									end = new RegExp('/ '+klass+'$/'),
+									start = new RegExp('/^'+klass+' /');
+								if (local === klass || end.test(local) || start.test(local)) {
 									newNodes[idx++] = node;
 								}
 							}
@@ -184,7 +186,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 if root is single -- just make it as an array. Local
 variables are faster.
 */
-						nodes = nodes.length ? nodes : [nodes];
+nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 						while (child = nodes[J++]) {
 /*
