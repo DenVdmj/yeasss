@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-07 21:04:53 +3000 (Wed, 07 Jan 2009) $
-* $Rev: 285 $
+* $Date: 2008-01-07 21:10:53 +3000 (Wed, 07 Jan 2009) $
+* $Rev: 286 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -83,7 +83,7 @@ So loop in given elements to find the correct one
 							ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
 							modificator = selector.replace(/\(.*/,"");
 						while (node = nodes[i++]) {
-							if (_.modificator[modificator] && !_.modificator[modificator](node, ind)) {
+							if (_.modificators[modificator] && !_.modificators[modificator](node, ind)) {
 								newNodes[idx++] = node;
 							}
 						}
