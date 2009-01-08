@@ -2,26 +2,20 @@
 /*
 * YASS1 - The fastest CSS1 selectors JavaScript library
 * Experimental branch of YASS - just CSS1 family.
-* Faster only by 10-25% than YASS 0.3.2
-* Slower than native methods by 150-350% (w/o cache)
+* Faster only by 20-30% than YASS 0.3.2
+* Slower than native methods by 100-300%
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-08 04:36:00 +3000 (Tue, 08 Jan 2009) $
-* $Rev: 3 $
+* $Date: 2008-01-08 22:33:01 +3000 (Thu, 08 Jan 2009) $
+* $Rev: 4 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
-var _ = function (selector, root, noCache) {
-/*
-Subtree added, second argument, thx to tenshi.
-Return cache if exists. Third argument.
-Return not cached result if root specified, thx to Skiv
-*/
-	return _.cache[selector] && !noCache && !root ? _.cache[selector] : _.main(selector, root || _.doc);
-};
-_.main = function (selector, root) {
+var _ = function (selector, root) {
+/* Subtree added, second argument, thx to tenshi. */
+	root = root || _.doc;
 /* sets of nodes, to handle comma-separated selectors */
 	var sets;
 /* quick return or generic call, missed ~ in attributes selector */
@@ -203,23 +197,10 @@ that must be nulled. Need this only to generic case
 		}
 	}
 /* return and cache results */
-	return _.cache[selector] = sets;
+	return sets;
 };
-/* cache for selected nodes, no leaks in IE detected */
-_.cache = {};
 /* caching global document */
 _.doc = document;
-/*
-clean cache on DOM changes. Code copied from Sizzle
-(thx, John), rev. 2008-12-05, line 13. Don't know why
-we should ignore this for Safari, querySelectorAll removed.
-*/
-if (_.doc.addEventListener) {
-  function invalidate(){ _.cache = {}; }
-  _.doc.addEventListener('DOMAttrModified', invalidate, false);
-  _.doc.addEventListener('DOMNodeInserted', invalidate, false);
-  _.doc.addEventListener('DOMNodeRemoved', invalidate, false);
-}
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
