@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-08 03:55:54 +3000 (Tue, 08 Jan 2009) $
-* $Rev: 289 $
+* $Date: 2008-01-08 04:00:55 +3000 (Tue, 08 Jan 2009) $
+* $Rev: 290 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -58,11 +58,12 @@ So loop in given elements to find the correct one
 					newNodes = [];
 				switch (RegExp.$1) {
 					case '.':
-						var klass = new RegExp('(^|\\s+)' + selector.slice(1) + '($|\\s+)');
+						var klass = selector.slice(1);
 						if (_.doc.getElementsByClassName) {
 							newNodes = root.getElementsByClassName(klass);
 							idx = newNodes.length;
 						} else {
+							klass = new RegExp('(^|\\s+)' + klass + '($|\\s+)');
 							var nodes = root.getElementsByTagName('*'),
 								i = 0,
 								node;
