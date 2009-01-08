@@ -6,8 +6,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-08 03:37:54 +3000 (Tue, 08 Jan 2009) $
-* $Rev: 288 $
+* $Date: 2008-01-08 03:55:54 +3000 (Tue, 08 Jan 2009) $
+* $Rev: 289 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root, noCache) {
@@ -78,7 +78,7 @@ So loop in given elements to find the correct one
 							nodes = root.getElementsByTagName('*'),
 							i = 0,
 							ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
-							modificator = selector.replace(/\(.*/,"");
+							modificator = selector.replace(/\(.*/,'');
 						while (node = nodes[i++]) {
 							if (_.modificators[modificator] && !_.modificators[modificator](node, ind)) {
 								newNodes[idx++] = node;
@@ -91,7 +91,7 @@ So loop in given elements to find the correct one
 							i = 0,
 							attrs = /\[([^!~^*|$\s[:=]+)([$^*|]?=)?([^\s:\]]+)?\]/.exec(selector),
 							attr = attrs[1] === 'class' ? 'className' : attrs[1],
-							eql = attrs[2] || "",
+							eql = attrs[2] || '',
 							value = attrs[3];
 						while (node = nodes[i++]) {
 /* check either attr is defined for given node or it's equal to give value */
@@ -163,13 +163,12 @@ tag, id, class, attribute, value, modificator, index.
 							klass = single[3] ? new RegExp('(^|\\s+)' + single[3] + '($|\\s+)') : '',
 							attr = single[4] === 'class' ? 'className' : single[4],
 							eql = single[5] || '',
-							value = single[6],
 							modificator = single[7],
 /*
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === "even" && "2n" || single[8] === "odd" && "2n%1" || !/\D/.test(single[8]) && "0n%" + single[8] || single[8]) : single[8],
+							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8],
 /* new nodes array */
 							newNodes = [],
 /* cached length of new nodes array */
@@ -192,7 +191,7 @@ Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
 							switch (ancestor) {
-								case " ":
+								case ' ':
 									var childs = child.getElementsByTagName(tag),
 										item,
 										h = 0;
@@ -205,7 +204,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by previous switch.
 */
-										if ((!id || (id && item.id === id)) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -218,11 +217,11 @@ Then mark selected element with expando
 									}
 									break;
 /* from w3.org: "an F element preceded by an E element" */
-								case "~":
+								case '~':
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -231,9 +230,9 @@ Then mark selected element with expando
 									}
 									break;
 /* from w3.org: "an F element immediately preceded by an E element" */
-								case "+":
+								case '+':
 									while ((child = child.nextSibling) && child.nodeType !== 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, value))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
 										if (last) {
 											child.yeasss = 1;
 										}
@@ -241,12 +240,12 @@ Then mark selected element with expando
 									}
 									break;
 /* from w3.org: "an F element child of an E element" */
-								case ">":
+								case '>':
 									var childs = child.getElementsByTagName(tag),
 										i = 0,
 										item;
 									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, value))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
 											if (last) {
 												item.yeasss = 1;
 											}
@@ -291,10 +290,10 @@ _.cache = {};
 _.doc = document;
 /* hash to check ancestors' selectors */
 _.ancestors = {
-	" ": 1,
-	"+": 1,
-	">": 1,
-	"~": 1
+	' ': 1,
+	'+': 1,
+	'>': 1,
+	'~': 1
 };
 /* hash to check nth-childs modificators */
 _.nth = {
@@ -304,14 +303,14 @@ _.nth = {
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
-	"": function (child, attr) {
+	'': function (child, attr) {
 		return !!child[attr];
 	},
 /*
 from w3.org "an E element whose "attr" attribute value is
 exactly equal to "value"
 */
-	"=": function (child, attr, value) {
+	'=': function (child, attr, value) {
 		return child[attr] && child[attr] === value;
 	},
 /*
@@ -319,28 +318,28 @@ from w3.prg "an E element whose "attr" attribute value is
 a list of space-separated values, one of which is exactly
 equal to "value"
 */
-	"~=": function (child, attr, value) {
-		return child[attr] && (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") !== -3);
+	'~=': function (child, attr, value) {
+		return child[attr] && (new RegExp('(^|\\s+)' + value + '($|\\s+)').test(child[attr]));
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
-	"^=": function (child, attr, value) {
+	'^=': function (child, attr, value) {
 		return child[attr] && !!child[attr].indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
-	"$=": function (child, attr, value) {
+	'$=': function (child, attr, value) {
 		return child[attr] && child[attr].indexOf(value) === child[attr].length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
-	"*=": function (child, attr, value) {
+	'*=': function (child, attr, value) {
 		return child[attr] && child[attr].indexOf(value) !== -1;
 	},
 /*
@@ -348,13 +347,13 @@ from w3.org "an E element whose "attr" attribute has
 a hyphen-separated list of values beginning (from the
 left) with "value"
 */
-	"|=": function (child, attr, value) {
+	'|=': function (child, attr, value) {
 		var i = child[attr];
-		return i && (i === value || !!i.indexOf(value+"-"));
+		return i && (i === value || !!i.indexOf(value+'-'));
 	},
 /* attr doesn't contain given value */
-	"!=": function (child, attr, value) {
-		return !child[attr] || (child[attr].indexOf(value) + child[attr].indexOf(" "+value) + child[attr].indexOf(value+" ") === -3);
+	'!=': function (child, attr, value) {
+		return !child[attr] || !(new RegExp('(^|\\s+)' + value + '($|\\s+)').test(child[attr]));
 	}
 };
 /*
@@ -457,7 +456,7 @@ from w3.org: "an element of type E in language "fr"
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 398 */
 	'enabled': function (child) {
-			return child.disabled || child.type === "hidden";
+			return child.disabled || child.type === 'hidden';
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 401 */
 	'disabled': function (child) {
@@ -480,9 +479,9 @@ we should ignore this for Safari, querySelectorAll removed.
 */
 if (_.doc.addEventListener) {
   function invalidate(){ _.cache = {}; }
-  _.doc.addEventListener("DOMAttrModified", invalidate, false);
-  _.doc.addEventListener("DOMNodeInserted", invalidate, false);
-  _.doc.addEventListener("DOMNodeRemoved", invalidate, false);
+  _.doc.addEventListener('DOMAttrModified', invalidate, false);
+  _.doc.addEventListener('DOMNodeInserted', invalidate, false);
+  _.doc.addEventListener('DOMNodeRemoved', invalidate, false);
 }
 /* initialization as a global var */
 window.yass = _;
