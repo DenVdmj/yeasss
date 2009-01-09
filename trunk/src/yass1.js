@@ -9,22 +9,23 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-08 22:33:01 +3000 (Thu, 08 Jan 2009) $
-* $Rev: 4 $
+* $Date: 2008-01-09 23:42:02 +3000 (Fri, 09 Jan 2009) $
+* $Rev: 5 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root) {
 /* Subtree added, second argument, thx to tenshi. */
 	root = root || _.doc;
 /* sets of nodes, to handle comma-separated selectors */
-	var sets;
+	var sets = [];
 /* quick return or generic call, missed ~ in attributes selector */
-	if (/^(.)\w+$/.exec(selector)) {
+	if (/^[\w#.]\w*$/.test(selector)) {
 /*
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
 */
-		switch (RegExp.$1) {
+		var firstLetter = selector.charAt(0);
+		switch (firstLetter) {
 			case '#':
 				var id = selector.slice(1);
 				sets = _.doc.getElementById(id);
@@ -50,33 +51,27 @@ So loop in given elements to find the correct one
 					}
 				}
 				break;
-			default:
-				var idx = 0,
-					newNodes = [];
-				switch (RegExp.$1) {
-					case '.':
-						var klass = selector.slice(1);
-						if (_.doc.getElementsByClassName) {
-							newNodes = root.getElementsByClassName(klass);
-							idx = newNodes.length;
-						} else {
-							klass = new RegExp('(^| +)' + klass + '($| +)');
-							var nodes = root.getElementsByTagName('*'),
-								i = 0,
-								node;
-							while (node = nodes[i++]) {
-								if (klass.test(node.className)) {
-									newNodes[idx++] = node;
-								}
-							}
+			case '.':
+				var klass = selector.slice(1),
+					idx = 0;
+				if (_.doc.getElementsByClassName) {
+					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? idx > 1 ? sets : sets[0] : null;
+				} else {
+					klass = new RegExp('(^| +)' + klass + '($| +)');
+					var nodes = root.getElementsByTagName('*'),
+						i = 0,
+						node;
+					while (node = nodes[i++]) {
+						if (klass.test(node.className)) {
+							sets[idx++] = node;
 						}
-						break;
-					default:
-						newNodes = root.getElementsByTagName(selector);
-						idx = newNodes.length;
-						break;
+
+					}
+					sets = idx ? idx > 1 ? sets : sets[0] : null;
 				}
-				sets = idx ? idx > 1 ? newNodes : newNodes[0] : null;
+				break;
+			default:
+				sets = (idx = (sets = root.getElementsByTagName(selector)).length) ? idx > 1 ? sets : sets[0] : null;
 				break;
 		}
 	} else {
@@ -95,9 +90,7 @@ groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
 				groups = selector.split(/ *, */),
-				group,
-/* current sets of nodes, to handle comma-separated selectors */
-				sets = null;
+				group;
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -114,14 +107,13 @@ to % to avoid collisions. Additional replace is required for IE.
 current set of nodes - to handle single selectors -
 is cleanded up with DOM root
 */
-					nodes = root;
+					nodes = [root];
 /*
 John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-/* hash for set of values is faster than simple RegExp */
-					single = /([^.#]+)?(?:#([^.#]+))?(?:\.([^.]+))?/.exec(single);
+					single = /([^ [:.#]+)?(?:#([^ [:.#]+))?(?:\.([^ [:.]+))?(?:\[([^!~^*|$ [:=]+)([!$^*|]?=)?([^ :\]]+)?\])?(?:\:([^ (]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -138,11 +130,6 @@ tag, id, class, attribute, value, modificator, index.
 						child,
 /* if we need to mark node with expando yeasss */
 						last = i === singles_length;
-/*
-if root is single -- just make it as an array. Local
-variables are faster.
-*/
-					nodes = nodes.length ? nodes : [nodes];
 /* loop in all root nodes */
 					while (child = nodes[J++]) {
 /*
@@ -160,7 +147,7 @@ to filter non-selected elements. Typeof 'string' not added -
 if we get element with name="id" it won't be equal to given ID string.
 Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
-by previous switch.
+by modificator functions hash.
 */
 							if ((!id || item.id === id) && (!klass || klass.test(item.className)) && !item.yeasss) {
 /* 
@@ -175,18 +162,19 @@ Then mark selected element with expando
 						}
 					}
 /* put selected nodes in local nodes' set */
-					nodes = idx ? idx === 1 ? newNodes[0] : newNodes : null;
+					nodes = newNodes;
 				}
 /* inialize sets with nodes */
-				sets = sets || nodes;
+				sets = sets.length ? sets : nodes;
 /* fixing bug on non-existent selector, thx to deerua */
-				if (nodes && groups_length > 1) {
+				if (groups_length > 1) {
 /* concat is faster than simple looping */
 					sets = (sets.length ? sets : [sets]).concat(nodes);
 				}
 			}
 /* define sets length to clean yeasss */
-			var idx = sets ? sets.length || (sets.yeasss = null) : 0;
+			var idx = sets ? sets.length : 0,
+				len = idx;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
@@ -194,6 +182,8 @@ that must be nulled. Need this only to generic case
 			while (idx--) {
 				sets[idx].yeasss = null;
 			}
+/* convert array to single value or null if required */
+			sets = len ? len === 1 ? sets[0] : sets : null;
 		}
 	}
 /* return and cache results */
