@@ -2,15 +2,15 @@
 /*
 * YASS1 - The fastest CSS1 selectors JavaScript library
 * Experimental branch of YASS - just CSS1 family.
-* Faster only by 20-30% than YASS 0.3.2
+* Faster only by 20-30% than YASS 0.3.4
 * Slower than native methods by 100-300%
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-09 23:42:02 +3000 (Fri, 09 Jan 2009) $
-* $Rev: 5 $
+* $Date: 2008-01-11 01:31:03 +3000 (Sun, 11 Jan 2009) $
+* $Rev: 6 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root) {
@@ -31,31 +31,19 @@ some simple cases - only ID or only CLASS for the very first occurence
 				sets = _.doc.getElementById(id);
 /*
 workaround with IE bug about returning element by name not by ID.
-Modified solution from
-http://deer.org.ua/2008/08/15/2/
-thx to deerua. Get all matching elements with this id
+Solution completely changed, thx to deerua.
+Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== id && (sets = _.doc.all[id])) {
-					var nodes_length = sets.length;
-/*
-if more than 1, choose first with the correct id.
-if we have the only element -- it's already in nodes.
-So loop in given elements to find the correct one
-*/
-					while (nodes_length--) {
-						var node = sets[nodes_length];
-						if (node.id === id) {
-							sets = node;
-							nodes_length = 0;
-						}
-					}
+				if (_.doc.all && sets.id !== id) {
+					sets = _.doc.all[id];
 				}
+				sets = sets ? [sets] : [];
 				break;
 			case '.':
 				var klass = selector.slice(1),
 					idx = 0;
 				if (_.doc.getElementsByClassName) {
-					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? idx > 1 ? sets : sets[0] : null;
+					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
 					klass = new RegExp('(^| +)' + klass + '($| +)');
 					var nodes = root.getElementsByTagName('*'),
@@ -67,11 +55,11 @@ So loop in given elements to find the correct one
 						}
 
 					}
-					sets = idx ? idx > 1 ? sets : sets[0] : null;
+					sets = idx ? sets : [];
 				}
 				break;
 			default:
-				sets = (idx = (sets = root.getElementsByTagName(selector)).length) ? idx > 1 ? sets : sets[0] : null;
+				sets = (idx = (sets = root.getElementsByTagName(selector)).length) ? sets : [];
 				break;
 		}
 	} else {
@@ -113,7 +101,7 @@ John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-					single = /([^ [:.#]+)?(?:#([^ [:.#]+))?(?:\.([^ [:.]+))?(?:\[([^!~^*|$ [:=]+)([!$^*|]?=)?([^ :\]]+)?\])?(?:\:([^ (]+)(?:\(([^)]+)\))?)?/.exec(single);
+					single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!~^*|$[:=]+)([!$^*|]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -169,21 +157,18 @@ Then mark selected element with expando
 /* fixing bug on non-existent selector, thx to deerua */
 				if (groups_length > 1) {
 /* concat is faster than simple looping */
-					sets = (sets.length ? sets : [sets]).concat(nodes);
+					sets = sets.concat(nodes);
 				}
 			}
 /* define sets length to clean yeasss */
-			var idx = sets ? sets.length : 0,
-				len = idx;
+			var idx = (sets = sets || []).length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
 */
 			while (idx--) {
-				sets[idx].yeasss = null;
+				sets[idx].yeasss = sets[idx].nodeIndex = sets[idx].nodeIndexLast = null;
 			}
-/* convert array to single value or null if required */
-			sets = len ? len === 1 ? sets[0] : sets : null;
 		}
 	}
 /* return and cache results */
