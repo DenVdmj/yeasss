@@ -1,177 +1,157 @@
 /**
- * Copyright (c) 2007 Andrew Sumin (http://jsx.ru/)
+ * JSX 1.2 - Multi-events and components loading library
  * 
- * Licensed under Creative Commons Atribution 3.0 license
- * http://creativecommons.org/licenses/by/3.0/
+ * Copyright (c) 2007 Andrew Sumin (http://jsx.ru/),
+ * 2009 Nikolay Matsievsky aka sunnybear (http://webo.in/)
  * 
- * Permission is granted to modify this work as stated
- * in license given that this notice is preserved. 
+ * Dual licensed under the MIT (MIT-LICENSE.txt)
+ * and GPL (GPL-LICENSE.txt) licenses.
  */
-
+ 
+(function () {
 /**
  * Core object contains methods for dynamic loading of scripts.
  */
- 
- var jsx = jsx || {};
- 
-(function () {
-var A = Array.prototype;
-if (!A.indexOf) {
-    A.indexOf = function (searchElement, fromIndex) {
-        fromIndex = fromIndex || 0;
-        for (var length = this.length; fromIndex < length; fromIndex++) {
-            if (this[fromIndex] == searchElement) {
-                return fromIndex;
-            }
-        }
-        return -1;
-    }
-}
-if (!A.lastIndexOf) {
-    A.lastIndexOf = function (searchElement, fromIndex) {
-        var length = this.length;
-        fromIndex = fromIndex || length - 1;
-        if (fromIndex < 0) {
-            fromIndex += length;
-        }
-        for (; fromIndex >= 0; fromIndex--) {
-            if (this[fromIndex] == searchElement) {
-                return fromIndex;
-            }
-        }
-        return -1;
-    }
-}
-if (!A.every) {
-    A.every = function (callback, thisObject) {
-        thisObject = thisObject || window;
-        var index = 0, length = this.length;
-        for (; index < length; index++) {
-            if (!callback.apply(thisObject, [this[index], index, this])) {
-                break;
-            }
-        }
-        return (index == length);
-    }
-}
-if (!A.filter) {
-    A.filter = function (callback, thisObject) {
-        thisObject = thisObject || window;
-        var length = this.length, count = 0, filtered = new Array(length);
-        for (var index = 0; index < length; index++) {
-            if (callback.apply(thisObject, [this[index], index, this])) {
-                filtered[count++] = this[index];
-            }
-        }
-        filtered.length = count;
-        return filtered;
-    }
-}
-if (!A.forEach) {
-    A.forEach = function (callback, thisObject) {
-        thisObject = thisObject || window;
-        for (var index = 0, length = this.length; index < length; index++) {
-            callback.apply(thisObject, [this[index], index, this]);
-        }
-    }
-}
-if (!A.map) {
-    A.map = function (callback, thisObject) {
-        thisObject = thisObject || window;
-        var length = this.length, map = new Array(length);
-        for (var index = 0; index < length; index++) {
-            map[index] = callback.apply(thisObject, [this[index], index, this]);
-        }
-        return map;
-    }
-}
-if (!A.some) {
-    A.some = function (callback, thisObject) {
-        thisObject = thisObject || window;
-        var index = 0, length = this.length;
-        for (; index < length; index++) {
-            if (callback.apply(thisObject, [this[index], index, this])) {
-                break;
-            }
-        }
-        return (index != length);
-    }
-}
 
-jsx.getReadyState = function(){
-  return document.readyState || 'loading';
-}
-function setReadyState(){
-    jsx.getReadyState = function(){return 'complete'};	
-}
-/* for Mozilla/Opera9 */
-if (document.addEventListener) {
-    document.addEventListener("DOMContentLoaded", setReadyState, false);
-}
-/* for Safari */
-if (/WebKit/i.test(navigator.userAgent)) {
-    // sniff
-    var _timer = setInterval(function() {
-        if (/loaded|complete/.test(document.readyState)) {
-            setReadyState(); // call the onload handler
-        }
-    }, 10);
-}
-})();
+var jsx = {};
+	
+/**
+ * Contains all global vars like base to core (this) file browser type and version...
+ */
+jsx.NULL  = function() { return null;         };
+jsx.EMPTY = function() { /* return nothing */ };
+/* user agent constants */
+jsx.userAgent = navigator.userAgent.toLowerCase();
+jsx.version = (jsx.userAgent.match(/.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/) || [])[1];
+jsx.safari  = jsx.userAgent.indexOf('webkit') !== -1;
+jsx.opera   = jsx.userAgent.indexOf('opera') !== -1;
+jsx.msie    = jsx.userAgent.indexOf('msie') !== -1 && !jsx.opera;
+jsx.mozilla = jsx.userAgent.indexOf('mozilla') !== -1 && !(jsx.safari || jsx.userAgent.indexOf('compatible') !== -1);
+/* caching global vars */
+jsx.doc = document;
+jsx.win = window;
 
 jsx.aliases = [];
 jsx.expectedAliases = {};
 jsx.charsets = [];
 jsx.scriptsByFileName = [];
-jsx._getAliasRegexp = /^\{[^\}]+\}/;
-/**
- * This method loads script and executes listener after script loading.
- * @param {String} String like "foo.bar". This string means to load file bar.js from framework folder subfolder foo.
- * @param {Function} Function for execution after loading script.
- * @method
- */
-jsx.require = function(url, listener){
-    this.Loader.require(url, listener);
-};
-/**
- * This method is for scripts that are loaded. They must execute this method (jsx.loaded) after all initialization functions.
- * @param {String} String like "foo.bar". This string means to load file bar.js from framework folder subfolder foo.
- * @method
- */
-jsx.loaded = function(url){
-    this.Loader.loaded(url);
-};
+jsx.params = {};
+jsx.base = 'yass';
+
+    Array.prototype.indexOf = function (searchElement, fromIndex) {
+        fromIndex = fromIndex || 0;
+		var length = this.length;
+        while (fromIndex++ < length) {
+            if (this[fromIndex] === searchElement) {
+                return fromIndex;
+            }
+        }
+        return -1;
+    }
+
+    Array.prototype.lastIndexOf = function (searchElement, fromIndex) {
+        var length = this.length;
+        fromIndex += fromIndex = fromIndex || length - 1 < 0 ? length : 0;
+		while (fromIndex--) {
+            if (this[fromIndex] === searchElement) {
+                return fromIndex;
+            }
+        }
+        return -1;
+    }
+
+    Array.prototype.every = function (callback, thisObject) {
+        thisObject = thisObject || jsx.win;
+        var idx = this.length;
+        while (idx--) {
+            if (!callback.apply(thisObject, [this[idx], idx, this])) {
+                break;
+            }
+        }
+        return !idx;
+    }
+
+	Array.prototype.forEach = function (callback, thisObject) {
+        thisObject = thisObject || jsx.win;
+		var idx = this.length;
+        while (idx--) {
+            callback.apply(thisObject, [this[idx], idx, this]);
+        }
+    }
+
+	Array.prototype.map = function (callback, thisObject) {
+        thisObject = thisObject || jsx.win;
+        var idx = this.length,
+			map = [];
+        while (idx--) {
+            map[idx] = callback.apply(thisObject, [this[idx], idx, this]);
+        }
+        return map;
+    }
+
+	Array.prototype.some = function (callback, thisObject) {
+        thisObject = thisObject || jsx.win;
+        var idx = this.length;
+        while (idx--) {
+            if (callback.apply(thisObject, [this[idx], idx, this])) {
+                break;
+            }
+        }
+        return (index != length);
+    }
+
+    jsx.filter = function (arr, callback) {
+        var length = arr.length,
+			count = 0,
+			filtered = [],
+			idx = 0;
+        while (idx < length) {
+            if (callback(arr[idx++])) {
+                filtered[count++] = arr[idx];
+            }
+        }
+        return filtered;
+    }
+/* Unobtrusive loading */
+jsx.getReadyState = function(){
+  return jsx.doc.readyState || 'loading';
+}
+function setReadyState() {
+    jsx.getReadyState = function(){return 'complete'};	
+}
+/* for Mozilla/Opera9+ */
+if (jsx.doc.addEventListener) {
+    jsx.doc.addEventListener("DOMContentLoaded", setReadyState, false);
+}
+/* for Safari */
+if (jsx.webkit) {
+    // sniff
+    var _timer = setInterval(function() {
+        if (/loaded|complete/.test(_.doc.readyState)) {
+            setReadyState(); // call the onload handler
+			clearInterval(_timer);
+        }
+    }, 10);
+}
 
 jsx.init = function(){
-    function setParamsAndInitLocator(){
-      	function setParamsAndInitLocator(script){
-            jsx.params = jsx.getScriptParams(script);
+    jsx.getBaseAndSetAlias('yass', 'jsx.js', 'utf-8', function (){
+        jsx.getScriptByFileName('jsx.js', function (script){
             if (jsx.params.base){
                 jsx.base = jsx.params.base;
-                jsx.require(['{jsx}.' + jsx.base + '.' + jsx.base], jsx.bind(jsx, jsx.initLocator));
-            }else if (jsx.base){
+                jsx.Loader.require(['{jsx}.' + jsx.base + '.' + jsx.base], jsx.bind(jsx, jsx.initLocator));
+            } else if (jsx.base){
                 jsx.initLocator();
             }
-      	}        
-        jsx.getScriptByFileName('jsx.js', setParamsAndInitLocator);
-    }
-    jsx.getBaseAndSetAlias('jsx', 'jsx.js', 'utf-8', setParamsAndInitLocator);   
+      	});
+    });
 }
 
-jsx.bind = function(){
-    var args = jsx.toArray(arguments), object = args.shift(), executer = args.shift();
+jsx.bind = function(object, executer){
     return function() {
-        return executer.apply(object, args.concat(jsx.toArray(arguments)));
+        return executer.apply(object, arguments);
     }
 }
-
-jsx.toArray = function(object){
-    var result = [];
-    for (var i = 0, l = object.length; i < l; i++){
-        result.push(object[i]);
-    }
-    return result;
-} 
 
 /**
  * Returns path to file in src attribute
@@ -179,11 +159,10 @@ jsx.toArray = function(object){
  * @method
  */
 jsx.getBase = function(file, listener){
-    function returnBase(script){
-        var src = script.getAttribute('src');
+    jsx.getScriptByFileName(file, function (script){
+        var src = script.src;
         listener(src.substring(0, src.indexOf(file)));
-    }
-    this.getScriptByFileName(file, returnBase);
+    });
 };
 
 /**
@@ -193,24 +172,17 @@ jsx.getBase = function(file, listener){
  * @method
  */    
 jsx.getScriptByFileName = function(file, listener, /* private */ tries){
-    if(this.scriptsByFileName[file]){
-       listener(this.scriptsByFileName[file]);
-       return;
-    }
-    tries = tries || 0;
-
-    function findScript(script){
-    	var src = script.getAttribute('src');
-    	return src && src.indexOf(file) >= 0;
-    }
-    this.scriptsByFileName[file] = jsx.toArray(document.getElementsByTagName('script')).filter(findScript)[0];
-
-    if(this.scriptsByFileName[file]){
-        listener(this.scriptsByFileName[file]);
-    }else if(tries < 1000){
-        var _this = this;
-        window.setTimeout(function (){_this.getScriptByFileName(file, listener, ++tries)}, 10);
-    }
+    if (jsx.scriptsByFileName[file] = jsx.scriptsByFileName[file] || jsx.filter(_('script'), function (script){
+    	return (script.src || '').indexOf(file) !== -1;
+    })[0]){
+		listener(jsx.scriptsByFileName[file]);
+    } else {		
+		if((tries = tries || 0) < 1000){
+			setTimeout(function(){
+				jsx.getScriptByFileName(file, listener, ++tries);
+			}, 10);
+		}
+	}
 }
 
 /**
@@ -220,30 +192,29 @@ jsx.getScriptByFileName = function(file, listener, /* private */ tries){
  * @param {String} charset
  */
 jsx.getBaseAndSetAlias = function(alias, file, charset, listener){
-    charset = charset || null;
-    function setAlias(base){
-        this.setAliasCharset(alias, charset);
-        this.setAlias(alias, base);
-        if (typeof listener == 'function'){
+    jsx.getBase(file, jsx.bind(jsx, function (base){
+        jsx.setAliasCharset(alias, charset || null);
+        jsx.setAlias(alias, base);
+        if (typeof listener === 'function'){
             listener();
         }
-    }
-    this.getBase(file, jsx.bind(this, setAlias));
+    }));
 };
 /**
  * Sets the alias
- * @param {String} alias
  * @param {String} path
+ * @param {String} alias
  * @method
  */
 jsx.setAlias = function(name, value){
-    this.aliases[name] = value;
-    if (!this.expectedAliases[name]){
+    jsx.aliases[name] = value;
+    if (!jsx.expectedAliases[name]){
         return;
     }
     // maybe some scripts are waiting for this alias        
-    var listener;
-    while ((listener = this.expectedAliases[name].shift())){
+    var listener,
+		idx = 0;
+    while (listener = jsx.expectedAliases[name][idx++]){
         listener();
     }
 };
@@ -254,7 +225,7 @@ jsx.setAlias = function(name, value){
  * @method
  */
 jsx.setAliasCharset = function(alias, charset){
-    this.charsets[alias] = charset;
+    jsx.charsets[alias] = charset;
 };
 /**
  * Returns the alias
@@ -262,124 +233,75 @@ jsx.setAliasCharset = function(alias, charset){
  * @method
  */
 jsx.getAlias = function(location){
-    var alias = this._getAliasRegexp.exec(location);
-    return (alias ? alias[0].substr(1, alias[0].length - 2) : null);
+    return location = /^\{[^}]+\}/.exec(location) ? location[0].substr(1, location[0].length - 2) : null;
 };
 
 jsx.getScriptParams = function(script){
-	try {
-        return typeof(script.onload) == 'undefined'
-            ? null
-            : script.onload()
-                ? script.onload()
-                : eval('(' + script.onload.replace(/return/, '') + ')');
-	}catch(e){
-        return script.getAttribute('onload')
-            ? eval('(' + script.getAttribute('onload').replace(/return/, '') + ')')
-            : null;
-	}
+	return !script.onload ? null : script.onload() ? script.onload() : eval('(' + script.onload.replace(/return/, '') + ')');
 }
-
-/**
- * Contains all global vars like base to core (this) file browser type and version...
- */
-jsx.Vars = new function(){
-    this.DEBUG = false;
-
-    this.FALSE = function() { return false;        };
-    this.TRUE  = function() { return true;         };
-    this.NULL  = function() { return null;         };
-    this.EMPTY = function() { /* return nothing */ };
-
-    var userAgent = navigator.userAgent.toLowerCase();
-    this.version = (userAgent.match(/.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/) || [])[1];
-    this.safari  = /webkit/.test(userAgent);
-    this.opera   = /opera/.test(userAgent);
-    this.msie    = /msie/.test(userAgent) && !/opera/.test(userAgent);
-    this.mozilla = /mozilla/.test(userAgent) && !/(compatible|webkit)/.test(userAgent);    
-};
 
 /**
  * Creates tag script.
  * @alias jsx.Scripts
  */
-jsx.Scripts = new function (){
+jsx.Scripts = function (){
     /**
      * This method creates tag SCRIPT.
      * @param {Object} Attrbites
      * @param {Function} Listerner for script creation.
      */
-    this.createScript = function (attributes, listener, /*private*/ tries){
-        tries = tries || 0;
-        listener = typeof(listener) == 'function' ? listener : jsx.Vars.NULL;
-        var script = this._createScript(attributes);
-        if (script == null && tries < 10){
-            window.setTimeout(jsx.bind(this, this.createScript, attributes, listener, ++tries), 10);
-        }else{
-            listener(script);
-        }
-    };
-
-    this._createScript = function (attributes) {
-        var script = document.createElement('script');
-        script.setAttribute('type', 'text/javascript');        
-        for (var i in attributes){
-            script.setAttribute(i, attributes[i]);
+    jsx.createScript = function (attributes, listener, /*private*/ tries){
+		var script = jsx.doc.createElement('script'),
+			head = _('head')[0];
+        script.type = 'text/javascript';
+        for (var i in attributes) {
+            script[i] = attributes[i];
         }
         // InsertBefore for IE.
         // If head is not closed and use appendChild IE crashes.
-        var head = document.getElementsByTagName('head').item(0);
         head.insertBefore(script, head.firstChild);
-        return script;
-    }
+		listener = typeof listener === 'function' ? listener : jsx.NULL;
+        if (!script && (tries = tries || 0) < 10) {
+            setTimeout(jsx.bind(jsx, jsx.createScript, attributes, listener, ++tries), 10);
+        } else {
+            listener(script);
+        }
+    };
 };
 
 /**
  * Creates tag link.
  * @alias jsx.Links
  */
-jsx.Links = new function (){
+jsx.Links = function (){
     /**
      * This method creates tag LINK.
      * @param {Object} Attrbites
      */
-    this.createLink = function (attributes){
-        var link = document.createElement('link');
+    jsx.createLink = function (attributes){
+        var link = jsx.doc.createElement('link'),
+			head = _('head')[0];
         attributes.rel = attributes.rel || 'stylesheet';
         attributes.type = attributes.type || 'text/css';
-        for (var i in attributes){
-            link.setAttribute(i, attributes[i]);
+        for (var i in attributes) {
+            link[i] = attributes[i];
         }
         // InsertBefore for IE.
         // If head is not closed and use appendChild IE crashes.
-        var head = document.getElementsByTagName('head').item(0);
         head.insertBefore(link, head.firstChild);
     };
 };
 
 /**
  * Creates real URL from strings.
+ * @param {String} String like "foo.bar"
+ * @param {String} File extention like "js"
+ * @return {String} URL like http://www.yandex.ru/foo/bar.js
  */
-jsx.ConstructURL = new function(){
-    /**
-     * Creates real URL from strings.
-     * @param {String} String like "foo.bar"
-     * @param {String} File extention like "js"
-     * @return {String} URL like http://www.yandex.ru/foo/bar.js
-     */
-    this.construct = function(string, type){
-        type = type || 'js';
-        string = string.replace(/\./g, '/');
-        function replacealias(match){
-            var alias = match.substr(1, match.length - 2);
-            return jsx.aliases[alias];
-        }
-        string = string.replace(/\{[^\}]+\}/ig, replacealias);
-        var http = string.match(/^https?\:\/\//i) || '';
-        string = string.replace(/^https?\:\/\//i, '');
-        string = string.replace(/\/\//ig, '/');
-        return http + string + '.' + type;
-    };
+jsx.ConstructURL = function(string, type){
+	return (string.match(/^https?\:\/\//i) || '') + string.replace(/\./g, '/').replace(/\{[^}]+\}/ig, function (match){
+		return jsx.aliases[match.substr(1, match.length - 2)];
+	}).replace(/^https?\:\/\//i, '').replace(/\/\//ig, '/') + '.' + (type || 'js');
 };
 
 /**
@@ -408,7 +330,7 @@ jsx.Locator = new function(){
 /**
  * Dynamically loads scripts.
  */
-jsx.Loader = new function() {
+jsx.Loader = function() {
     this.scripts = {};
 
     /**
@@ -417,7 +339,7 @@ jsx.Loader = new function() {
      * @param {Function} Function for execution after loading script.
      */
     this.require = function(urls, listener){
-        urls = (typeof(urls) == 'string') ? [urls] : urls;
+        urls = typeof urls === 'string' ? [urls] : urls;
         this.requireList(urls, listener);
     };
 
@@ -430,24 +352,27 @@ jsx.Loader = new function() {
             url = '{jsx}.' + url;
         }
         if (!this.scripts[url]){
-            this.scripts[url] = this.createScriptFake(jsx.Vars.NULL);
+            this.scripts[url] = function (){
+				return { listeners: [jsx.NULL], ready: false }
+			};
         }
-        var listener;
-        while ((listener = this.scripts[url].listeners.shift())){
+        var listener,
+			idx = 0;
+        while (listener = this.scripts[url].listeners[idx++]){
             listener();
         }
         this.scripts[url].ready = true;
     };
 
     this.requireList = function(urls, listener){
-        var counter = 0, length = urls.length;
+        var length = urls.length;
         // when JS file will be loaded listWatch will be called
         function listWatch() {
             // increase files counter
-            counter++;
+            length--;
             // exec listener if all loaded
-            if(counter == length){
-                (listener || jsx.Vars.EMPTY)();
+            if (!length){
+                (listener || jsx.EMPTY)();
             }
         }
         urls.forEach(jsx.bind(this, this._require, listWatch));
@@ -461,80 +386,41 @@ jsx.Loader = new function() {
         }
         if (jsx.aliases[alias]){
             // if alas is defined start load
-            this.startLoad(url, listener, jsx.charsets[alias])
-        }else{
+			if (this.scripts[url]) {
+				if (this.scripts[url].ready) {
+					(listener || jsx.EMPTY)();
+				} else {
+					this.scripts[url].listeners.push(listener);
+				}
+			} else {
+				this.scripts[url] = this.createScriptFake(listener);
+				jsx.Scripts.createScript({'src': jsx.ConstructURL(url), 'charset': jsx.charsets[alias]});
+			}
+        } else {
             // another way may be it will appear later
-            this.waitForAlias(alias, url, listener)
-        }
-    };
-
-    this.startLoad = function(url, listener, charset){
-        if (this.scripts[url]){
-             this.putOnWaitingList(url, listener);
-        }else{
-            this.scripts[url] = this.createScriptFake(listener);
-            jsx.Scripts.createScript({'src': jsx.ConstructURL.construct(url), 'charset': charset});
-        }
-    };
-
-    this.waitForAlias = function (alias, url, listener){
-        if(!jsx.expectedAliases[alias]){
-            jsx.expectedAliases[alias] = [];
-        }
-        jsx.expectedAliases[alias].push(jsx.bind(this, this._require, listener, url));
-        jsx.Locator.load(alias);
-    };
-    
-    this.createScriptFake = function(listener){
-        return {
-            listeners: [listener],
-            ready: false
-        }
-    };
-
-    this.putOnWaitingList = function (url, listener){
-        if(this.scripts[url].ready){
-            (listener || jsx.Vars.EMPTY)();
-        }else{
-            this.scripts[url].listeners.push(listener);
+			jsx.expectedAliases[alias] = jsx.expectedAliases[alias] || [];
+			jsx.expectedAliases[alias].push(jsx.bind(this, this._require, listener, url));
+			jsx.Locator.load(alias);
         }
     };
 };
-
-jsx.Console = new function(){
-    this.log      = jsx.Vars.NULL;
-    this.info     = jsx.Vars.NULL;
-    this.warn     = jsx.Vars.NULL;
-    this.error    = jsx.Vars.NULL;
-    this.trace    = jsx.Vars.NULL;
-    this.dir      = jsx.Vars.NULL;
-    this.dirxml   = jsx.Vars.NULL;
-    this.group    = jsx.Vars.NULL;
-    this.groupEnd = jsx.Vars.NULL;
-};
-
-/*
-window.onerror = function(){
-    return !jsx.Vars.DEBUG;
-};
-*/
 
 jsx.initLocator = function(){
     jsx.Locator.set('jsxComponents', {
-        src: jsx.ConstructURL.construct('{jsx}.jsxComponents.jsxComponents'),
+        src: jsx.ConstructURL('{jsx}.jsxComponents.jsxComponents'),
         charset: 'utf-8',
         called: false
     });  
     jsx.Locator.set('jsxAjax', {
-        src: jsx.ConstructURL.construct('{jsx}.jsxAjax.jsxAjax'),
+        src: jsx.ConstructURL('{jsx}.jsxAjax.jsxAjax'),
         charset: 'utf-8',
         called: false
-    });  
+    });
     if (!jsx.params.autoinit){
         return;
     }
-    if (jsx.getReadyState() == 'complete'){
-        jsx.require('Components', function(){jsx.Components.init()});
+    if (jsx.getReadyState() === 'complete'){
+        jsx.Loader.require('Components', function(){jsx.Components.init()});
         return;
     }    
     function observe(element, name, observer, useCapture) {
@@ -544,15 +430,12 @@ jsx.initLocator = function(){
             element.attachEvent('on' + name, observer);
         }
     }
-    observe(window, 'load', function () {
-        jsx.require('Components', function(){jsx.Components.init()});
+    observe(jsx.win, 'load', function () {
+        jsx.Loader.require('Components', function(){jsx.Components.init()});
     });
 };
 
-jsx.init();
+_.jsx = jsx;
+})();
 
-// If you watn to debug something add parameter jsxdebug=on to location.
-// To switch off debug mode add parameter jsxdebug=off to location.
-if (/jsxdebug/.test(window.location.search) || /jsxdebug/.test(document.cookie)){
-    jsx.require('Debug');
-}
+_.jsx.init();
