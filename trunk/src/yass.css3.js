@@ -314,7 +314,7 @@ from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return child[attr] && !!child[attr].indexOf(value);
+		return child[attr] && !child[attr].indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
