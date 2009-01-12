@@ -1,18 +1,20 @@
 (function(){
 /*
-* YASS 0.3.4 - The fastest CSS selectors JavaScript library
+* YASS 0.3.5 - The fastest CSS selectors JavaScript library
+* JSX 1.1 - Multi-events and components loading library
 *
-* Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
+* Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
+* 2007-2009 Andrew Sumin (jsx.ru)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-11 01:27:00 +3000 (Sun, 11 Jan 2009) $
-* $Rev: 299 $
+* $Date: 2008-01-13 02:28:01 +3000 (Tue, 13 Jan 2009) $
+* $Rev: 305 $
 */
 /**
  * Returns number of nodes or an empty array
  * @param {String} CSS selector
- * @param {DOM node} root to into
+ * @param {DOM node} root to look into
  * @param {Boolean} disable cache of not
  */
 var _ = function (selector, root, noCache) {
@@ -276,6 +278,8 @@ that must be nulled. Need this only to generic case
 _.cache = {};
 /* caching global document */
 _.doc = document;
+/* caching global window */
+_.win = window;
 /* hash to check ancestors' selectors */
 _.ancestors = {
 	' ': 1,
@@ -314,7 +318,7 @@ from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return child[attr] && !!child[attr].indexOf(value);
+		return child[attr] && !child[attr].indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
@@ -460,19 +464,145 @@ options in Safari work properly.
       return !child.selected;
     }
 };
-/*
-clean cache on DOM changes. Code copied from Sizzle
-(thx, John), rev. 2008-12-05, line 13. Don't know why
-we should ignore this for Safari, querySelectorAll removed.
-*/
-if (_.doc.addEventListener) {
-  function invalidate(){ _.cache = {}; }
-  _.doc.addEventListener('DOMAttrModified', invalidate, false);
-  _.doc.addEventListener('DOMNodeInserted', invalidate, false);
-  _.doc.addEventListener('DOMNodeRemoved', invalidate, false);
+/* to handle DOM ready event */
+_.isReady = 0;
+/* to execute functions on DOM ready event */
+_.onloadList = [];
+/* dual operator for onload functions stack */
+_.ready = function(fn){
+/* with param works as setter */
+	if (typeof fn === 'function') {
+		if (!_.isReady) {
+			_.onloadList.push(fn);
+/* after DOM ready works as executer */
+		} else {
+			fn();
+		}
+/* w/o any param works as executer */
+	} else {
+		var idx = _.onloadList.length;
+		while (idx--) {
+			_.onloadList[idx]();
+		}
+		_.isReady = 1;
+	}
+};
+/* general event adding function */
+_.bind = function (element, event, fn) {
+	var handler = element[event];
+	if (handler) {
+		element['on' + event] = function(){
+			handler();
+			fn();
+		}
+	} else {
+		element['on' + event] = fn;
+	}
 }
+/* browser sniffing */
+_.ua = navigator.userAgent.toLowerCase();
+/* code for DOM ready and browsers detection taken from jQuery */
+_.browser = {
+	safari: _.ua.indexOf('webkit') !== -1,
+	opera: _.ua.indexOf('opera') !== -1,
+	ie: _.ua.indexOf('msie') !== -1 && _.ua.indexOf('opera') === -1,
+	mozilla: _.ua.indexOf('mozilla') !== -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') === -2)
+};
+/*
+Mozilla, Opera (see further below for it) and webkit nightlies
+currently support this event
+*/
+if (_.doc.addEventListener && !_.browser.opera) {
+/* Use the handy event callback */
+	_.doc.addEventListener("DOMContentLoaded", _.ready, false);
+}
+/*
+If IE is used and is not in a frame
+Continually check to see if the document is ready
+*/
+if (_.browser.ie && _.win == top) {
+	(function(){
+		if (_.isReady) {
+			return;
+		}
+/*
+If IE is used, use the trick by Diego Perini
+http://javascript.nwbox.com/IEContentLoaded/
+*/
+		try {
+			_.doc.documentElement.doScroll("left");
+		} catch(e) {
+			setTimeout(arguments.callee, 0);
+			return;
+		}
+		_.ready();
+	})();
+}
+if (_.browser.opera) {
+	_.doc.addEventListener("DOMContentLoaded", function () {
+			if (_.isReady) {
+				return;
+			}
+			var i = 0,
+				ss;
+			while (ss = _doc.styleSheets[i++]) {
+				if (ss.disabled) {
+					setTimeout(arguments.callee, 0);
+					return;
+				}
+			}
+			_.ready();
+		}, false);
+}
+if (_.browser.safari) {
+	(function(){
+		if (_.isReady) {
+			return;
+		}
+		if ((_.doc.readyState !== "loaded" && _.doc.readyState !== "complete") || _.doc.styleSheets.length !== _("style, link[rel=stylesheet]").length) {
+			setTimeout(arguments.callee, 0);
+			return;
+		}
+		_.ready();
+	})();
+}
+/* to support old browsers */
+_.bind(_.win, 'load', _.ready);
+/* async loader of javascript modules, main ideas are taken from jsx */
+_.load = function (file, text) {
+    var script = _.doc.createElement('script'),
+		head = _('head')[0];
+    script.type = 'text/javascript';
+    script.src = file;
+    script.text = text || '';
+/* script onload for IE */
+    script.onreadystatechange = function() {
+		if (this.readyState === 'loaded') {
+			eval(this.innerHTML);
+		}
+    }
+    script.onload = function (e) {
+	    eval(e.target.innerHTML);
+    };
+/* InsertBefore for IE. If head is not closed and use appendChild IE crashes. */
+	head.insertBefore(script, head.firstChild);
+}
+/* base className for yass modules */
+_.base = 'yass-component';
 /* initialization as a global var */
-window.yass = _;
+_.win.yass = _;
 /* do not override existing window._ */
-window._ = window._ || _;
+_.win._ = _.win._ || _.win.yass;
 })();
+
+/* autoload of components */
+_.ready(function() {
+	var components = _('[class^='+_.base+']'),
+		item,
+		idx = 0;
+	while (item = components[idx++]) {
+/* script filename should be equal to yass.[module name].js */
+		_.load('yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
+		item.title = null;
+	}
+});
