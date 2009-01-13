@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 02:28:01 +3000 (Tue, 13 Jan 2009) $
-* $Rev: 305 $
+* $Date: 2008-01-13 10:36:02 +3000 (Tue, 13 Jan 2009) $
+* $Rev: 312 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -469,7 +469,7 @@ _.isReady = 0;
 /* to execute functions on DOM ready event */
 _.onloadList = [];
 /* dual operator for onload functions stack */
-_.ready = function(fn){
+_.ready = function (fn) {
 /* with param works as setter */
 	if (typeof fn === 'function') {
 		if (!_.isReady) {
@@ -480,23 +480,34 @@ _.ready = function(fn){
 		}
 /* w/o any param works as executer */
 	} else {
-		var idx = _.onloadList.length;
-		while (idx--) {
-			_.onloadList[idx]();
+		if (!_.isReady){
+			var idx = _.onloadList.length;
+			while (idx--) {
+				_.onloadList[idx]();
+			}
+			_.isReady = 1;
 		}
-		_.isReady = 1;
 	}
 };
 /* general event adding function */
 _.bind = function (element, event, fn) {
-	var handler = element[event];
-	if (handler) {
-		element['on' + event] = function(){
-			handler();
-			fn();
+	if (typeof element === 'string') {
+		var elements = _(element),
+			idx = 0;
+		while (element = elements[idx++]) {
+			_.bind(element, event, fn);
 		}
 	} else {
-		element['on' + event] = fn;
+		event = 'on' + event;
+		var handler = element[event];
+		if (handler) {
+			element[event] = function(){
+				handler();
+				fn();
+			};
+		} else {
+			element[event] = fn;
+		}
 	}
 }
 /* browser sniffing */
@@ -570,10 +581,10 @@ if (_.browser.safari) {
 _.bind(_.win, 'load', _.ready);
 /* async loader of javascript modules, main ideas are taken from jsx */
 _.load = function (file, text) {
-    var script = _.doc.createElement('script'),
-		head = _('head')[0];
-    script.type = 'text/javascript';
+    var head = _('head')[0],
+		script = _.doc.createElement('script');
     script.src = file;
+    script.type = 'text/javascript';
     script.text = text || '';
 /* script onload for IE */
     script.onreadystatechange = function() {
@@ -599,10 +610,12 @@ _.win._ = _.win._ || _.win.yass;
 _.ready(function() {
 	var components = _('[class^='+_.base+']'),
 		item,
+		len = components.length,
 		idx = 0;
-	while (item = components[idx++]) {
+	while (idx < len) {
+		item = components[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load('yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
+		_.load('yeasss/src/yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
 		item.title = null;
 	}
 });
