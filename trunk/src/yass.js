@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 10:36:02 +3000 (Tue, 13 Jan 2009) $
-* $Rev: 312 $
+* $Date: 2008-01-13 10:39:03 +3000 (Tue, 13 Jan 2009) $
+* $Rev: 313 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -581,8 +581,7 @@ if (_.browser.safari) {
 _.bind(_.win, 'load', _.ready);
 /* async loader of javascript modules, main ideas are taken from jsx */
 _.load = function (file, text) {
-    var head = _('head')[0],
-		script = _.doc.createElement('script');
+    var script = _('head')[0].appendChild(_.doc.createElement('script'));
     script.src = file;
     script.type = 'text/javascript';
     script.text = text || '';
@@ -595,8 +594,6 @@ _.load = function (file, text) {
     script.onload = function (e) {
 	    eval(e.target.innerHTML);
     };
-/* InsertBefore for IE. If head is not closed and use appendChild IE crashes. */
-	head.insertBefore(script, head.firstChild);
 }
 /* base className for yass modules */
 _.base = 'yass-component';
@@ -615,7 +612,7 @@ _.ready(function() {
 	while (idx < len) {
 		item = components[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load('yeasss/src/yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
+		_.load('yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
 		item.title = null;
 	}
 });
