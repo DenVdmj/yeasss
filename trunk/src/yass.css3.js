@@ -1,13 +1,14 @@
 (function(){
 /*
 * YASS 0.3.4 - The fastest CSS selectors JavaScript library
+* Experimental branch of YASS - CSS3 selectors with cache only
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-11 01:27:00 +3000 (Sun, 11 Jan 2009) $
-* $Rev: 299 $
+* $Date: 2008-01-13 15:25:01 +3000 (Tue, 13 Jan 2009) $
+* $Rev: 2 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -144,8 +145,8 @@ John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-/* hash for set of values is faster than simple RegExp */
-					if (!_.ancestors[single] && nodes) {
+/* simple comparison is faster than hash */
+					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
 						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!~^*|$[:=]+)([!$^*|]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
@@ -161,7 +162,7 @@ tag, id, class, attribute, value, modificator, index.
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8],
+							ind = modificator === 'nth-child' || modificator === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8],
 /* new nodes array */
 							newNodes = [],
 /* cached length of new nodes array */
@@ -276,18 +277,6 @@ that must be nulled. Need this only to generic case
 _.cache = {};
 /* caching global document */
 _.doc = document;
-/* hash to check ancestors' selectors */
-_.ancestors = {
-	' ': 1,
-	'+': 1,
-	'>': 1,
-	'~': 1
-};
-/* hash to check nth-childs modificators */
-_.nth = {
-	'nth-child': 1,
-	'nth-last-child': 1
-};
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
