@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 10:39:03 +3000 (Tue, 13 Jan 2009) $
-* $Rev: 313 $
+* $Date: 2008-01-13 15:38:05 +3000 (Tue, 13 Jan 2009) $
+* $Rev: 316 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -146,8 +146,8 @@ John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
 				while (single = singles[i++]) {
-/* hash for set of values is faster than simple RegExp */
-					if (!_.ancestors[single] && nodes) {
+/* simple comparison is faster than hash */
+					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
 						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!~^*|$[:=]+)([!$^*|]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
@@ -163,7 +163,7 @@ tag, id, class, attribute, value, modificator, index.
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-							ind = _.nth[modificator] ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8],
+							ind = modificator === 'nth-child' || modificator === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8],
 /* new nodes array */
 							newNodes = [],
 /* cached length of new nodes array */
@@ -280,18 +280,6 @@ _.cache = {};
 _.doc = document;
 /* caching global window */
 _.win = window;
-/* hash to check ancestors' selectors */
-_.ancestors = {
-	' ': 1,
-	'+': 1,
-	'>': 1,
-	'~': 1
-};
-/* hash to check nth-childs modificators */
-_.nth = {
-	'nth-child': 1,
-	'nth-last-child': 1
-};
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
@@ -579,21 +567,87 @@ if (_.browser.safari) {
 }
 /* to support old browsers */
 _.bind(_.win, 'load', _.ready);
+/*
+hash of YASS modules statuses -
+0 (non loaded),
+1 (loading),
+2 (loaded)
+*/
+_.modules = {};
 /* async loader of javascript modules, main ideas are taken from jsx */
-_.load = function (file, text) {
-    var script = _('head')[0].appendChild(_.doc.createElement('script'));
-    script.src = file;
-    script.type = 'text/javascript';
-    script.text = text || '';
-/* script onload for IE */
-    script.onreadystatechange = function() {
-		if (this.readyState === 'loaded') {
-			eval(this.innerHTML);
+_.load = function (aliases, text) {
+	var loader = function (alias, text, tries) {
+		if (!(tries%1000)) {
+			_.modules[alias] = 0;
+			if (!(tries -= 1000)) {
+/* can't load module */
+				_.modules[alias] = -1;
+				return;
+			}
 		}
-    }
-    script.onload = function (e) {
-	    eval(e.target.innerHTML);
-    };
+		switch (_.modules[alias]) {
+/* module is already loaded, just execute onload */
+			case 2:
+					try {
+/* try to eval onload handler */
+						eval(text);
+					} catch (a) {
+					}				
+				break;
+/* module hasn't been loaded yet */
+			default:
+				var script = _('head')[0].appendChild(_.doc.createElement('script'));
+				script.src = 'yeasss/src/yass.' + alias + '.js';
+				script.type = 'text/javascript';
+/* to handle script.onload event */
+				script.text = text || '';
+/* to fill hash of loaded scripts */
+				script.title = alias;
+/* script onload for IE */
+				script.onreadystatechange = function() {
+					if (this.readyState === 'loaded') {
+						try {
+/* try to eval onload handler */
+							eval(this.innerHTML);
+						} catch (a) {
+							return;
+						}
+/* on success mark this module as loaded */
+						_.modules[this.title] = 2;
+					}
+				}
+				script.onload = function (e) {
+						e = e.target;
+						try {
+/* try to eval onload handler */
+							eval(e.innerHTML);
+						} catch (a) {
+							return;
+						}
+/* on success mark this module as loaded */
+						_.modules[e.title] = 2;
+				};
+/* set module's status to loading */
+				_.modules[alias] = 1;
+/* module is loading, re-check in 100 ms */
+			case 1:
+				setTimeout(function () {
+					loader(alias, text, tries--)
+				}, 10);
+				break;
+		}
+	},
+		idx = 0,
+		alias;
+/* 
+we can define several modules for 1 component:
+yass-component-module1-module2-module3
+*/
+	aliases = aliases.replace(new RegExp('(.* )?'+_.base+'-( .*)?'),'').split("-");
+	while (alias = aliases[idx++]) {
+/* 21000 = 1000 * 11 reload attempts + 10 * 100 checks * 10 reload attempts */
+		loader(alias, text, 21000);
+	}
 }
 /* base className for yass modules */
 _.base = 'yass-component';
@@ -612,7 +666,7 @@ _.ready(function() {
 	while (idx < len) {
 		item = components[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load('yass.' + item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?','g'),'')+'.js', item.title);
+		_.load(item.className, item.title);
 		item.title = null;
 	}
 });
