@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 14:39:07 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 335 $
+* $Date: 2008-01-14 23:00:08 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 336 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -110,7 +110,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll) {
+		if (_.doc.querySelectorAll && selector.indexOf('!=') === -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -461,7 +461,7 @@ _.ready = function (fn) {
 /* with param works as setter */
 	if (typeof fn === 'function') {
 		if (!_.isReady) {
-			_.onloadList.push(fn);
+			_.onloadList[_.onloadList.length] = fn;
 /* after DOM ready works as executer */
 		} else {
 			fn();

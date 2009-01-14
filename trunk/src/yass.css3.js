@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 14:37:05 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 6 $
+* $Date: 2008-01-14 23:00:06 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 7 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -109,7 +109,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll) {
+		if (_.doc.querySelectorAll && selector.indexOf('!=') === -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
