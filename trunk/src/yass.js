@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 12:33:06 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 330 $
+* $Date: 2008-01-14 14:39:07 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 335 $
 */
 /**
  * Returns number of nodes or an empty array
