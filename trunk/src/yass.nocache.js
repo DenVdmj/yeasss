@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 11:54:04 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 5 $
+* $Date: 2008-01-14 14:37:05 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 6 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -121,8 +121,9 @@ Split by RegExp, thx to tenshi.
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
 to % to avoid collisions. Additional replace is required for IE.
+Replace ~ in attributes to & to avoid collisions.
 */
-				var singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(~|>|\+)/," $1 ").split(/ +/),
+				var singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(\[[^\]]+)~/,"$1&").replace(/(~|>|\+)/," $1 ").split(/ +/),
 					singles_length = singles.length,
 /* to handle RegExp for single selector */
 					single,
@@ -141,7 +142,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 				while (single = singles[i++]) {
 /* simple comparison is faster than hash */
 					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!~^*|$[:=]+)([!$^*|]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -287,7 +288,7 @@ from w3.prg "an E element whose "attr" attribute value is
 a list of space-separated values, one of which is exactly
 equal to "value"
 */
-	'~=': function (child, attr, value) {
+	'&=': function (child, attr, value) {
 		return (attr = child.getAttribute(attr)) && (new RegExp('(^| +)' + value + '($| +)').test(attr));
 	},
 /*
