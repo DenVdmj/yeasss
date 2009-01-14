@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 11:07:02 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 3 $
+* $Date: 2008-01-14 11:54:04 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 5 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -89,12 +89,12 @@ Get all matching elements with this id
 					node,
 					i = 0,
 					attrs = /\[([^!~^*|$ [:=]+)([$^*|]?=)?([^ :\]]+)?\]/.exec(selector),
-					attr = attrs[1] === 'class' ? 'className' : attrs[1],
+					attr = attrs[1],
 					eql = attrs[2] || '',
 					value = attrs[3];
 				while (node = nodes[i++]) {
 /* check either attr is defined for given node or it's equal to given value */
-					if (_.attr[eql] && _.attr[eql](node, attr, value)) {
+					if (_.attr[eql] && (_.attr[eql](node, attr, value) || (attr === 'class' && _.attr[eql](node, 'className', value)))) {
 						sets[idx++] = node;
 					}
 				}
@@ -155,7 +155,7 @@ tag, id, class, attribute, value, modificator, index.
 						var tag = single[1] || '*',
 							id = single[2],
 							klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '',
-							attr = single[4] === 'class' ? 'className' : single[4],
+							attr = single[4],
 							eql = single[5] || '',
 							modificator = single[7],
 /*
@@ -193,7 +193,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -210,7 +210,7 @@ Then mark selected element with expando
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -221,7 +221,7 @@ Then mark selected element with expando
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case '+':
 									while ((child = child.nextSibling) && child.nodeType !== 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 										if (last) {
 											child.yeasss = 1;
 										}
@@ -234,7 +234,7 @@ Then mark selected element with expando
 										i = 0,
 										item;
 									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
 											if (last) {
 												item.yeasss = 1;
 											}
@@ -281,7 +281,7 @@ _.doc = document;
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
 	'': function (child, attr) {
-		return !!child[attr];
+		return !!child.getAttribute(attr);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value is
