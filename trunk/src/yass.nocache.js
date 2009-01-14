@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 15:25:01 +3000 (Tue, 13 Jan 2009) $
-* $Rev: 2 $
+* $Date: 2008-01-14 11:07:02 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 3 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -280,7 +280,7 @@ from w3.org "an E element whose "attr" attribute value is
 exactly equal to "value"
 */
 	'=': function (child, attr, value) {
-		return child[attr] && child[attr] === value;
+		return (attr = child.getAttribute(attr)) && attr === value;
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value is
@@ -288,28 +288,28 @@ a list of space-separated values, one of which is exactly
 equal to "value"
 */
 	'~=': function (child, attr, value) {
-		return child[attr] && (new RegExp('(^| +)' + value + '($| +)').test(child[attr]));
+		return (attr = child.getAttribute(attr)) && (new RegExp('(^| +)' + value + '($| +)').test(attr));
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return child[attr] && !child[attr].indexOf(value);
+		return (attr = child.getAttribute(attr)) && !attr.indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return child[attr] && child[attr].indexOf(value) === child[attr].length - value.length;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) === attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return child[attr] && child[attr].indexOf(value) !== -1;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) !== -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -317,12 +317,11 @@ a hyphen-separated list of values beginning (from the
 left) with "value"
 */
 	'|=': function (child, attr, value) {
-		var i = child[attr];
-		return i && (i === value || !!i.indexOf(value+'-'));
+		return (attr = child.getAttribute(attr)) && (attr === value || !!attr.indexOf(value + '-'));
 	},
 /* attr doesn't contain given value */
 	'!=': function (child, attr, value) {
-		return !child[attr] || !(new RegExp('(^| +)' + value + '($| +)').test(child[attr]));
+		return !(attr = child.getAttribute(attr)) || !(new RegExp('(^| +)' + value + '($| +)').test(attr));
 	}
 };
 /*
