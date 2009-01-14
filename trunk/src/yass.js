@@ -1,6 +1,6 @@
 (function(){
 /*
-* YASS 0.3.5 - The fastest CSS selectors JavaScript library
+* YASS 0.3.6 - The fastest CSS selectors JavaScript library
 * JSX 1.1 - Multi-events and components loading library
 *
 * Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 15:38:05 +3000 (Tue, 13 Jan 2009) $
-* $Rev: 316 $
+* $Date: 2008-01-14 12:33:06 +3000 (Wed, 14 Jan 2009) $
+* $Rev: 330 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -90,12 +90,12 @@ Get all matching elements with this id
 					node,
 					i = 0,
 					attrs = /\[([^!~^*|$ [:=]+)([$^*|]?=)?([^ :\]]+)?\]/.exec(selector),
-					attr = attrs[1] === 'class' ? 'className' : attrs[1],
+					attr = attrs[1],
 					eql = attrs[2] || '',
 					value = attrs[3];
 				while (node = nodes[i++]) {
 /* check either attr is defined for given node or it's equal to given value */
-					if (_.attr[eql] && _.attr[eql](node, attr, value)) {
+					if (_.attr[eql] && (_.attr[eql](node, attr, value) || (attr === 'class' && _.attr[eql](node, 'className', value)))) {
 						sets[idx++] = node;
 					}
 				}
@@ -128,8 +128,9 @@ Split by RegExp, thx to tenshi.
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
 to % to avoid collisions. Additional replace is required for IE.
+Replace ~ in attributes to & to avoid collisions.
 */
-				var singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(~|>|\+)/," $1 ").split(/ +/),
+				var singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(\[[^\]]+)~/,"$1&").replace(/(~|>|\+)/," $1 ").split(/ +/),
 					singles_length = singles.length,
 /* to handle RegExp for single selector */
 					single,
@@ -148,7 +149,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 				while (single = singles[i++]) {
 /* simple comparison is faster than hash */
 					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!~^*|$[:=]+)([!$^*|]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -156,7 +157,7 @@ tag, id, class, attribute, value, modificator, index.
 						var tag = single[1] || '*',
 							id = single[2],
 							klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '',
-							attr = single[4] === 'class' ? 'className' : single[4],
+							attr = single[4],
 							eql = single[5] || '',
 							modificator = single[7],
 /*
@@ -194,7 +195,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -211,7 +212,7 @@ Then mark selected element with expando
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -222,7 +223,7 @@ Then mark selected element with expando
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case '+':
 									while ((child = child.nextSibling) && child.nodeType !== 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](child, attr, single[6]))) && !child.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator))) {
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 										if (last) {
 											child.yeasss = 1;
 										}
@@ -235,7 +236,7 @@ Then mark selected element with expando
 										i = 0,
 										item;
 									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && _.attr[eql](item, attr, single[6]))) && !item.yeasss && (!(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator))) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
 											if (last) {
 												item.yeasss = 1;
 											}
@@ -284,43 +285,43 @@ _.win = window;
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
 	'': function (child, attr) {
-		return !!child[attr];
+		return !!child.getAttribute(attr);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value is
 exactly equal to "value"
 */
 	'=': function (child, attr, value) {
-		return child[attr] && child[attr] === value;
+		return (attr = child.getAttribute(attr)) && attr === value;
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value is
 a list of space-separated values, one of which is exactly
 equal to "value"
 */
-	'~=': function (child, attr, value) {
-		return child[attr] && (new RegExp('(^| +)' + value + '($| +)').test(child[attr]));
+	'&=': function (child, attr, value) {
+		return (attr = child.getAttribute(attr)) && (new RegExp('(^| +)' + value + '($| +)').test(attr));
 	},
 /*
 from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return child[attr] && !child[attr].indexOf(value);
+		return (attr = child.getAttribute(attr)) && !attr.indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return child[attr] && child[attr].indexOf(value) === child[attr].length - value.length;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) === attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return child[attr] && child[attr].indexOf(value) !== -1;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) !== -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -328,12 +329,11 @@ a hyphen-separated list of values beginning (from the
 left) with "value"
 */
 	'|=': function (child, attr, value) {
-		var i = child[attr];
-		return i && (i === value || !!i.indexOf(value+'-'));
+		return (attr = child.getAttribute(attr)) && (attr === value || !!attr.indexOf(value + '-'));
 	},
 /* attr doesn't contain given value */
 	'!=': function (child, attr, value) {
-		return !child[attr] || !(new RegExp('(^| +)' + value + '($| +)').test(child[attr]));
+		return !(attr = child.getAttribute(attr)) || !(new RegExp('(^| +)' + value + '($| +)').test(attr));
 	}
 };
 /*
@@ -558,7 +558,7 @@ if (_.browser.safari) {
 		if (_.isReady) {
 			return;
 		}
-		if ((_.doc.readyState !== "loaded" && _.doc.readyState !== "complete") || _.doc.styleSheets.length !== _("style, link[rel=stylesheet]").length) {
+		if ((_.doc.readyState !== "loaded" && _.doc.readyState !== "complete") || _.doc.styleSheets.length !== _('style,link[rel=stylesheet]').length) {
 			setTimeout(arguments.callee, 0);
 			return;
 		}
@@ -568,71 +568,67 @@ if (_.browser.safari) {
 /* to support old browsers */
 _.bind(_.win, 'load', _.ready);
 /*
-hash of YASS modules statuses -
-0 (non loaded),
+hash of YASS modules: status and init. Statuses:
+-1 (can't load)
+0 (starting),
 1 (loading),
-2 (loaded)
+2 (loaded),
+3 (waiting)
 */
 _.modules = {};
 /* async loader of javascript modules, main ideas are taken from jsx */
 _.load = function (aliases, text) {
-	var loader = function (alias, text, tries) {
-		if (!(tries%1000)) {
-			_.modules[alias] = 0;
+	var loader = function (alias, text, tries, aliases) {
+		if (!(tries%100)) {
+			(_.modules[alias] = _.modules[alias] ? _.modules[alias] : {}).status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
-				_.modules[alias] = -1;
+				_.modules[alias].status = -1;
 				return;
 			}
 		}
-		switch (_.modules[alias]) {
+		switch (_.modules[alias].status) {
 /* module is already loaded, just execute onload */
 			case 2:
-					try {
+				try {
 /* try to eval onload handler */
-						eval(text);
-					} catch (a) {
-					}				
+					eval(text);
+				} catch (a) {
+				}
+/* module is waiting for other modules */
+			case 3:
 				break;
 /* module hasn't been loaded yet */
 			default:
-				var script = _('head')[0].appendChild(_.doc.createElement('script'));
-				script.src = 'yeasss/src/yass.' + alias + '.js';
+				var script = _.doc.createElement('script');
+				script.src = 'yass.' + alias + '.js';
 				script.type = 'text/javascript';
 /* to handle script.onload event */
 				script.text = text || '';
 /* to fill hash of loaded scripts */
 				script.title = alias;
+/*
+to lock this script load status untill all dependencies 
+will be resolved
+*/
+				script.className = aliases.join(' ');
 /* script onload for IE */
 				script.onreadystatechange = function() {
-					if (this.readyState === 'loaded') {
-						try {
-/* try to eval onload handler */
-							eval(this.innerHTML);
-						} catch (a) {
-							return;
-						}
-/* on success mark this module as loaded */
-						_.modules[this.title] = 2;
+					if (this.readyState === 'complete') {
+/* run onload handlers logic */
+						_.postloader(this);
 					}
-				}
-				script.onload = function (e) {
-						e = e.target;
-						try {
-/* try to eval onload handler */
-							eval(e.innerHTML);
-						} catch (a) {
-							return;
-						}
-/* on success mark this module as loaded */
-						_.modules[e.title] = 2;
 				};
+				script.onload = function (e) {
+					_.postloader(e.target);
+				};
+				_('head')[0].appendChild(script);
 /* set module's status to loading */
-				_.modules[alias] = 1;
+				_.modules[alias].status = 1;
 /* module is loading, re-check in 100 ms */
 			case 1:
 				setTimeout(function () {
-					loader(alias, text, tries--)
+					loader(alias, text, --tries, aliases)
 				}, 10);
 				break;
 		}
@@ -643,10 +639,49 @@ _.load = function (aliases, text) {
 we can define several modules for 1 component:
 yass-component-module1-module2-module3
 */
-	aliases = aliases.replace(new RegExp('(.* )?'+_.base+'-( .*)?'),'').split("-");
+	aliases = aliases.split("-");
 	while (alias = aliases[idx++]) {
-/* 21000 = 1000 * 11 reload attempts + 10 * 100 checks * 10 reload attempts */
-		loader(alias, text, 21000);
+/* 12000 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts */
+		loader(alias, text, 12000, aliases);
+	}
+}
+/* handle all handlers' logic of module's onload */
+_.postloader = function (e) {
+	try {
+/* try to eval onload handler */
+		eval(e.innerHTML);
+	} catch (a) {
+		return;
+	}
+	var module = _.modules[e.title],
+/* try to resolve dependencies */
+		aliases = e.className.split(','),
+		notloaded = aliases.length - 1;
+/* set status to waiting */
+	module.status = 3;
+/*
+if something isn't loaded yet - count this
+to handle last component onlaod
+*/
+	while (notloaded-- && _.modules[aliases[notloaded]].status == 3) {}
+/* if there is more than one module to load - wait futher */
+	if (notloaded != -1) {
+		return;
+	}
+	aliases = _('script[class~=' + e.title + ']');
+	var alias, 
+		idx = 0;
+/* on success mark this module as loaded */
+	while (alias = aliases[idx++]) {
+		module = _.modules[alias.title];
+/* and close all dependencies that are tied to this module */
+		if (module.status == 3) {
+			module.status = 2;
+/* if any handler is attached for module onload - run it */
+			if (module.init) {
+				module.init();
+			}
+		}
 	}
 }
 /* base className for yass modules */
@@ -666,7 +701,7 @@ _.ready(function() {
 	while (idx < len) {
 		item = components[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load(item.className, item.title);
+		_.load(item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?'),''), item.title);
 		item.title = null;
 	}
 });
