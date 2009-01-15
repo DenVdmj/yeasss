@@ -8,7 +8,7 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 16:52:10 +3000 (Thu, 15 Jan 2009) $
+* $Date: 2008-01-15 17:01:11 +3000 (Thu, 15 Jan 2009) $
 * $Rev: 344 $
 */
 /**
@@ -181,7 +181,6 @@ direct childs, neighbours or something else.
 										item,
 										h = 0;
 									while (item = childs[h++]) {
-										alert(item.nodeName + " " + single[6] + " " + _.attr[eql](item, 'className', single[6]));
 										
 /*
 check them for ID or Class. Also check for expando 'yeasss'
