@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 17:01:11 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 344 $
+* $Date: 2008-01-15 17:59:12 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 345 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -641,6 +641,8 @@ to lock this module load status untill all dependencies
 will be resolved
 */
 		_.modules[alias].deps = _.modules[alias].deps || {'yass':[]};
+/* to count loaded / not loaded dependencies */
+		_.modules[alias].notloaded = _.modules[alias].notloaded || 0;
 /* 
 the first module goes w/o any dependencies
 don't include original alias and make array unique
@@ -649,7 +651,6 @@ don't include original alias and make array unique
 			_.modules[alias].deps[a] = 1;
 /* for faster for-in loop */
 			_.modules[alias].deps['yass'][_.modules[alias].deps['yass'].length] = a;
-/* to count loaded / not loaded dependencies */
 			_.modules[alias].notloaded++;
 		}
 /* 11999 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts - 1 */
@@ -693,7 +694,7 @@ to handle last component onload
 				dep = _.modules[alias];
 /* resolve all dependencies that are tied to this module */
 				if (dep.status == 3 && dep.deps[title]) {
-					if (!(dep.notloaded--)) {
+					if (!(--dep.notloaded)) {
 						dep.status = 2;
 /* if any handler is attached for module onload - run it */
 						if (dep.init) {
