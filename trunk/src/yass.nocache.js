@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 23:00:06 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 7 $
+* $Date: 2008-01-15 16:55:07 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 8 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -296,21 +296,21 @@ from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && !attr.indexOf(value);
+		return (attr = child.getAttribute(attr) + '') && !attr.indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) === attr.length - value.length;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) === attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) !== -1;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) !== -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -318,7 +318,7 @@ a hyphen-separated list of values beginning (from the
 left) with "value"
 */
 	'|=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && (attr === value || !!attr.indexOf(value + '-'));
+		return (attr = child.getAttribute(attr) + '') && (attr === value || !!attr.indexOf(value + '-'));
 	},
 /* attr doesn't contain given value */
 	'!=': function (child, attr, value) {

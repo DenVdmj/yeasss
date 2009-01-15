@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 13:01:09 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 342 $
+* $Date: 2008-01-15 16:52:10 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 344 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -17,19 +17,12 @@
  * @param {DOM node} root to look into
  * @param {Boolean} disable cache of not
  */
-var _ = function (selector, root, noCache) {
+var _ = function (selector, root) {
 /*
 Subtree added, second argument, thx to tenshi.
-Return cache if exists. Third argument.
-Return not cached result if root specified, thx to Skiv
 */
-	if (_.cache[selector] && !noCache && !root) {
-		return  _.cache[selector];
-	}
 /* clean root with document */
 	root = root || _.doc;
-/* sets of nodes, to handle comma-separated selectors */
-	var sets = [];
 /* quick return or generic call, missed ~ in attributes selector */
 	if (/^[\w[:#.][\w\]*^|=!]*$/.test(selector)) {
 /*
@@ -39,8 +32,8 @@ some simple cases - only ID or only CLASS for the very first occurence
 		var firstLetter = selector.charAt(0);
 		switch (firstLetter) {
 			case '#':
-				var id = selector.slice(1);
-				sets = _.doc.getElementById(id);
+				var id = selector.slice(1),
+					sets = _.doc.getElementById(id);
 /*
 workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
@@ -49,13 +42,13 @@ Get all matching elements with this id
 				if (_.doc.all && sets.id !== id) {
 					sets = _.doc.all[id];
 				}
-				sets = sets ? [sets] : [];
-				break;
+				return sets ? [sets] : [];
 			case '.':
 				var klass = selector.slice(1),
-					idx = 0;
+					idx = 0,
+					sets = [];
 				if (_.doc.getElementsByClassName) {
-					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
+					return (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
 					klass = new RegExp('(^| +)' + klass + '($| +)');
 					var nodes = root.getElementsByTagName('*'),
@@ -67,11 +60,11 @@ Get all matching elements with this id
 						}
 
 					}
-					sets = idx ? sets : [];
+					return idx ? sets : [];
 				}
-				break;
 			case ':':
 				var idx = 0,
+					sets = [],
 					node,
 					nodes = root.getElementsByTagName('*'),
 					i = 0,
@@ -82,10 +75,10 @@ Get all matching elements with this id
 						sets[idx++] = node;
 					}
 				}
-				sets = idx ? sets : [];
-				break;
+				return idx ? sets : [];
 			case '[':
 				var idx = 0,
+					sets = [],
 					nodes = root.getElementsByTagName('*'),
 					node,
 					i = 0,
@@ -99,19 +92,18 @@ Get all matching elements with this id
 						sets[idx++] = node;
 					}
 				}
-				sets = idx ? sets : [];
-				break;
+				return idx ? sets : [];
 			default:
-				sets = (idx = (sets = root.getElementsByTagName(selector)).length) ? sets : [];
-				break;
+				var sets = [];
+				return (idx = (sets = root.getElementsByTagName(selector)).length) ? sets : [];
 		}
 	} else {
 /*
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll && selector.indexOf('!=') == -1) {
-			sets = root.querySelectorAll(selector);
+		if (_.doc.querySelectorAll && selector.indexOf('!=') === -1) {
+			return root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
 /* number of groups to merge or not result arrays */
@@ -121,7 +113,9 @@ groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
 				groups = selector.split(/ *, */),
-				group;
+				group,
+/* sets of nodes, to handle comma-separated selectors */
+				sets = [];
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -187,6 +181,8 @@ direct childs, neighbours or something else.
 										item,
 										h = 0;
 									while (item = childs[h++]) {
+										alert(item.nodeName + " " + single[6] + " " + _.attr[eql](item, 'className', single[6]));
+										
 /*
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
@@ -270,13 +266,11 @@ that must be nulled. Need this only to generic case
 			while (idx--) {
 				sets[idx].yeasss = sets[idx].nodeIndex = sets[idx].nodeIndexLast = null;
 			}
+/* return results */
+			return sets;
 		}
 	}
-/* return and cache results */
-	return _.cache[selector] = sets;
 };
-/* cache for selected nodes, no leaks in IE detected */
-_.cache = {};
 /* caching global document */
 _.doc = document;
 /* caching global window */
@@ -307,21 +301,21 @@ from w3.prg "an E element whose "attr" attribute value
 begins exactly with the string "value"
 */
 	'^=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && !attr.indexOf(value);
+		return (attr = child.getAttribute(attr) + '') && !attr.indexOf(value);
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) == attr.length - value.length;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) == attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) != -1;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) != -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -329,7 +323,7 @@ a hyphen-separated list of values beginning (from the
 left) with "value"
 */
 	'|=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && (attr === value || !!attr.indexOf(value + '-'));
+		return (attr = child.getAttribute(attr) + '') && (attr === value || !!attr.indexOf(value + '-'));
 	},
 /* attr doesn't contain given value */
 	'!=': function (child, attr, value) {
@@ -531,7 +525,7 @@ http://javascript.nwbox.com/IEContentLoaded/
 		try {
 			_.doc.documentElement.doScroll("left");
 		} catch(e) {
-			setTimeout(arguments.callee, 0);
+			setTimeout(arguments.callee);
 			return;
 		}
 		_.ready();
@@ -546,7 +540,7 @@ if (_.browser.opera) {
 				ss;
 			while (ss = _.doc.styleSheets[i++]) {
 				if (ss.disabled) {
-					setTimeout(arguments.callee, 0);
+					setTimeout(arguments.callee);
 					return;
 				}
 			}
@@ -559,7 +553,7 @@ if (_.browser.safari) {
 			return;
 		}
 		if ((_.doc.readyState !== "loaded" && _.doc.readyState !== "complete") || _.doc.styleSheets.length !== _('style,link[rel=stylesheet]').length) {
-			setTimeout(arguments.callee, 0);
+			setTimeout(arguments.callee);
 			return;
 		}
 		_.ready();
@@ -669,7 +663,6 @@ _.postloader = function (e) {
 /* try to eval onload handler */
 		eval(e.innerHTML);
 	} catch (a) {
-		return;
 	}
 	var module = _.modules[e.title],
 /* try to resolve dependencies */
