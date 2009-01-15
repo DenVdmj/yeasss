@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 17:59:12 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 345 $
+* $Date: 2008-01-15 18:36:13 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 347 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -646,6 +646,7 @@ will be resolved
 /* 
 the first module goes w/o any dependencies
 don't include original alias and make array unique
+also track cases when module is already loaded
 */
 		if ((a = aliases[idx-2]) && a !== alias && !_.modules[alias].deps[a]) {
 			_.modules[alias].deps[a] = 1;
@@ -659,10 +660,13 @@ don't include original alias and make array unique
 }
 /* handle all handlers' logic of module's onload */
 _.postloader = function (e) {
-	try {
+/* evaling innerHTML for script only for Opera */
+	if (_.browser.opera) {
+		try {
 /* try to eval onload handler */
-		eval(e.innerHTML);
-	} catch (a) {
+			eval(e.innerHTML);
+		} catch (a) {
+		}
 	}
 	var module = _.modules[e.title],
 /* try to resolve dependencies */
@@ -693,15 +697,13 @@ to handle last component onload
 			while (alias = modules[idx++]) {
 				dep = _.modules[alias];
 /* resolve all dependencies that are tied to this module */
-				if (dep.status == 3 && dep.deps[title]) {
-					if (!(--dep.notloaded)) {
+				if (dep.deps[title] && !(--dep.notloaded) && dep.status == 3) {
 						dep.status = 2;
 /* if any handler is attached for module onload - run it */
 						if (dep.init) {
 							dep.init();
 						}
 						recursive(alias);
-					}
 				}
 			}
 		};
