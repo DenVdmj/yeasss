@@ -1,6 +1,6 @@
 (function(){
 /*
-* YASS 0.3.6 - The fastest CSS selectors JavaScript library
+* YASS 0.3.7 - The fastest CSS selectors JavaScript library
 * JSX 1.1 - Multi-events and components loading library
 *
 * Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 23:07:14 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 348 $
+* $Date: 2008-01-15 23:51:15 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 350 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -596,7 +596,7 @@ _.load = function (aliases, text) {
 /* set module's status to loading. Threads in IE are amazing */
 				_.modules[alias].status = 1;
 				var script = _.doc.createElement('script');
-				script.src = 'yass.' + alias + '.js';
+				script.src = alias.indexOf('.js') + alias.indexOf('/') != -2 ? alias : 'yass.' + alias + '.js';
 				script.type = 'text/javascript';
 /* to handle script.onload event */
 				script.text = text || '';
@@ -712,24 +712,20 @@ to handle last component onload
 		};
 	recursive(e.title);
 }
-/* base className for yass modules */
-_.base = 'yass-component';
-/* initialization as a global var */
-_.win.yass = _;
-/* do not override existing window._ */
-_.win._ = _.win._ || _.win.yass;
+/* initialize as a global var and don't override window._ */
+_.win._ = _.win._ || (_.win.yass = _);
 })();
 
 /* autoload of components */
 _.ready(function() {
-	var components = _('[class^='+_.base+']'),
+	var components = _('[class^=yass-component-]'),
 		item,
 		len = components.length,
 		idx = 0;
 	while (idx < len) {
 		item = components[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load(item.className.replace(new RegExp('(.* )?'+_.base+'-( .*)?'),''), item.title);
+		_.load(item.className.slice(item.className.indexOf('yass-component-') + 15), item.title);
 		item.title = null;
 	}
 });
@@ -740,7 +736,7 @@ if (_.browser.ie) {
 			idx = nodes.length,
 			node,
 			events = ['onblur','onclick','onchange','ondblclick','onerror','onfocus','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onreadystatechange','onresize','onscroll','onselect','onsubmit','onunload'],
-			i = 21;
+			i;
 		while (idx--) {
 			node = nodes[idx];
 			i = 21;
