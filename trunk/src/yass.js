@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 18:36:13 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 347 $
+* $Date: 2008-01-15 23:07:14 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 348 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -441,20 +441,18 @@ from w3.org: "an element of type E in language "fr"
 Accessing this property makes selected-by-default
 options in Safari work properly.
 */
-      child.parentNode.selectedIndex;
-      return !child.selected;
+			child.parentNode.selectedIndex;
+			return !child.selected;
     }
 };
 /* to handle DOM ready event */
 _.isReady = 0;
-/* to execute functions on DOM ready event */
-_.onloadList = [];
 /* dual operator for onload functions stack */
 _.ready = function (fn) {
 /* with param works as setter */
 	if (typeof fn === 'function') {
 		if (!_.isReady) {
-			_.onloadList[_.onloadList.length] = fn;
+			_.ready.list[_.ready.list.length] = fn;
 /* after DOM ready works as executer */
 		} else {
 			fn();
@@ -462,14 +460,16 @@ _.ready = function (fn) {
 /* w/o any param works as executer */
 	} else {
 		if (!_.isReady){
-			var idx = _.onloadList.length;
+			var idx = _.ready.list.length;
 			while (idx--) {
-				_.onloadList[idx]();
+				_.ready.list[idx]();
 			}
 			_.isReady = 1;
 		}
 	}
 };
+/* to execute functions on DOM ready event */
+_.ready.list = [];
 /* general event adding function */
 _.bind = function (element, event, fn) {
 	if (typeof element === 'string') {
@@ -610,7 +610,7 @@ _.load = function (aliases, text) {
 					}
 				};
 				script.onload = function (e) {
-					_.postloader(e.target);
+					_.postloader(e.srcElement || e.target);
 				};
 				_('head')[0].appendChild(script);
 /* module is loading, re-check in 100 ms */
@@ -654,8 +654,11 @@ also track cases when module is already loaded
 			_.modules[alias].deps['yass'][_.modules[alias].deps['yass'].length] = a;
 			_.modules[alias].notloaded++;
 		}
+/* avoid additional loops for loading module */
+		if (!_.modules[alias].status) {
 /* 11999 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts - 1 */
-		loader(alias, text, 11999, aliases);
+			loader(alias, text, 11999, aliases);
+		}
 	}
 }
 /* handle all handlers' logic of module's onload */
@@ -730,3 +733,20 @@ _.ready(function() {
 		item.title = null;
 	}
 });
+/* garbage cleaner adds 10-100ms to window unload */
+if (_.browser.ie) {
+	_.bind(_.win, 'unload', function(){
+		var nodes = _('*'),
+			idx = nodes.length,
+			node,
+			events = ['onblur','onclick','onchange','ondblclick','onerror','onfocus','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onreadystatechange','onresize','onscroll','onselect','onsubmit','onunload'],
+			i = 21;
+		while (idx--) {
+			node = nodes[idx];
+			i = 21;
+			while (i--) {
+				node[events[i]] = null;
+			}
+		}
+	});
+}
