@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-14 23:00:08 +3000 (Wed, 14 Jan 2009) $
-* $Rev: 336 $
+* $Date: 2008-01-15 13:01:09 +3000 (Thu, 15 Jan 2009) $
+* $Rev: 342 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -110,7 +110,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll && selector.indexOf('!=') === -1) {
+		if (_.doc.querySelectorAll && selector.indexOf('!=') == -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -314,14 +314,14 @@ from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) === attr.length - value.length;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) == attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr)) && attr.indexOf(value) !== -1;
+		return (attr = child.getAttribute(attr)) && attr.indexOf(value) != -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -502,10 +502,10 @@ _.bind = function (element, event, fn) {
 _.ua = navigator.userAgent.toLowerCase();
 /* code for DOM ready and browsers detection taken from jQuery */
 _.browser = {
-	safari: _.ua.indexOf('webkit') !== -1,
-	opera: _.ua.indexOf('opera') !== -1,
-	ie: _.ua.indexOf('msie') !== -1 && _.ua.indexOf('opera') === -1,
-	mozilla: _.ua.indexOf('mozilla') !== -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') === -2)
+	safari: _.ua.indexOf('webkit') != -1,
+	opera: _.ua.indexOf('opera') != -1,
+	ie: _.ua.indexOf('msie') != -1 && _.ua.indexOf('opera') == -1,
+	mozilla: _.ua.indexOf('mozilla') != -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') == -2)
 };
 /*
 Mozilla, Opera (see further below for it) and webkit nightlies
@@ -544,7 +544,7 @@ if (_.browser.opera) {
 			}
 			var i = 0,
 				ss;
-			while (ss = _doc.styleSheets[i++]) {
+			while (ss = _.doc.styleSheets[i++]) {
 				if (ss.disabled) {
 					setTimeout(arguments.callee, 0);
 					return;
@@ -573,14 +573,14 @@ hash of YASS modules: status and init. Statuses:
 0 (starting),
 1 (loading),
 2 (loaded),
-3 (waiting)
+3 (waiting for dependencies)
 */
-_.modules = {};
+_.modules = {'yass':[]};
 /* async loader of javascript modules, main ideas are taken from jsx */
 _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
-		if (!(tries%100)) {
-			(_.modules[alias] = _.modules[alias] ? _.modules[alias] : {}).status = 0;
+		if (!(tries%100) && _.modules[alias].status < 2) {
+			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
 				_.modules[alias].status = -1;
@@ -595,11 +595,13 @@ _.load = function (aliases, text) {
 					eval(text);
 				} catch (a) {
 				}
-/* module is waiting for other modules */
+/* module is waiting for initialization */
 			case 3:
 				break;
 /* module hasn't been loaded yet */
 			default:
+/* set module's status to loading. Threads in IE are amazing */
+				_.modules[alias].status = 1;
 				var script = _.doc.createElement('script');
 				script.src = 'yass.' + alias + '.js';
 				script.type = 'text/javascript';
@@ -607,11 +609,6 @@ _.load = function (aliases, text) {
 				script.text = text || '';
 /* to fill hash of loaded scripts */
 				script.title = alias;
-/*
-to lock this script load status untill all dependencies 
-will be resolved
-*/
-				script.className = aliases.join(' ');
 /* script onload for IE */
 				script.onreadystatechange = function() {
 					if (this.readyState === 'complete') {
@@ -623,8 +620,6 @@ will be resolved
 					_.postloader(e.target);
 				};
 				_('head')[0].appendChild(script);
-/* set module's status to loading */
-				_.modules[alias].status = 1;
 /* module is loading, re-check in 100 ms */
 			case 1:
 				setTimeout(function () {
@@ -634,15 +629,38 @@ will be resolved
 		}
 	},
 		idx = 0,
-		alias;
+		alias,
+		a;
 /* 
 we can define several modules for 1 component:
 yass-component-module1-module2-module3
 */
 	aliases = aliases.split("-");
 	while (alias = aliases[idx++]) {
-/* 12000 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts */
-		loader(alias, text, 12000, aliases);
+/* create module in YASS */
+		if (!_.modules[alias]) {
+			_.modules[alias] = {};
+/* for faster for-in loop */
+			_.modules['yass'][_.modules['yass'].length] = alias;
+		}
+/*
+to lock this module load status untill all dependencies 
+will be resolved
+*/
+		_.modules[alias].deps = _.modules[alias].deps || {'yass':[]};
+/* 
+the first module goes w/o any dependencies
+don't include original alias and make array unique
+*/
+		if ((a = aliases[idx-2]) && a !== alias && !_.modules[alias].deps[a]) {
+			_.modules[alias].deps[a] = 1;
+/* for faster for-in loop */
+			_.modules[alias].deps['yass'][_.modules[alias].deps['yass'].length] = a;
+/* to count loaded / not loaded dependencies */
+			_.modules[alias].notloaded++;
+		}
+/* 11999 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts - 1 */
+		loader(alias, text, 11999, aliases);
 	}
 }
 /* handle all handlers' logic of module's onload */
@@ -655,34 +673,46 @@ _.postloader = function (e) {
 	}
 	var module = _.modules[e.title],
 /* try to resolve dependencies */
-		aliases = e.className.split(','),
-		notloaded = aliases.length - 1;
+		aliases = module.deps['yass'],
+		idx = aliases.length - 1;
 /* set status to waiting */
 	module.status = 3;
 /*
 if something isn't loaded yet - count this
-to handle last component onlaod
+to handle last component onload
 */
-	while (notloaded-- && _.modules[aliases[notloaded]].status == 3) {}
+	while (aliases[idx] && _.modules[aliases[idx]].status == 2 && idx--) {}
 /* if there is more than one module to load - wait futher */
-	if (notloaded != -1) {
+	if (idx > -1) {
 		return;
 	}
-	aliases = _('script[class~=' + e.title + ']');
-	var alias, 
-		idx = 0;
 /* on success mark this module as loaded */
-	while (alias = aliases[idx++]) {
-		module = _.modules[alias.title];
-/* and close all dependencies that are tied to this module */
-		if (module.status == 3) {
-			module.status = 2;
+	module.status = 2;
 /* if any handler is attached for module onload - run it */
-			if (module.init) {
-				module.init();
-			}
-		}
+	if (module.init) {
+		module.init();
 	}
+	var modules = _.modules['yass'],
+		recursive = function(title) {
+			var dep,
+				alias,
+				idx = 0;
+			while (alias = modules[idx++]) {
+				dep = _.modules[alias];
+/* resolve all dependencies that are tied to this module */
+				if (dep.status == 3 && dep.deps[title]) {
+					if (!(dep.notloaded--)) {
+						dep.status = 2;
+/* if any handler is attached for module onload - run it */
+						if (dep.init) {
+							dep.init();
+						}
+						recursive(alias);
+					}
+				}
+			}
+		};
+	recursive(e.title);
 }
 /* base className for yass modules */
 _.base = 'yass-component';
