@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-15 23:51:15 +3000 (Thu, 15 Jan 2009) $
-* $Rev: 350 $
+* $Date: 2008-01-16 00:45:16 +3000 (Fri, 16 Jan 2009) $
+* $Rev: 351 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -354,22 +354,21 @@ _.modificators = {
 		},
 /* from w3.org: "an E element, the n-th child of its parent" */
 	'nth-child': function (child, ind) {
-		var i = child.nodeIndex || 0;
-		ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0;
+		var i = child.nodeIndex || 0,
+			a = ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0,
+			b = ind[1];
 /* check if we have already looked into siblings, using exando - very bad */
 		if (i) {
-			return !( (i + ind[3]) % ind[1]);
+			return !( (i + a) % b);
 		} else {
 /* in the other case just reverse logic for n and loop siblings */
 			var brother = child.parentNode.firstChild;
 			i++;
 /* looping in child to find if nth expression is correct */
 			do {
-				if (brother.nodeType === 1) {
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-					if ((brother.nodeIndex = ++i) && child === brother && ((i + ind[3]) % ind[1])) {
-						return 0;
-					}
+				if (brother.nodeType === 1 && (brother.nodeIndex = ++i) && child === brother && ((i + a) % b)) {
+					return 0;
 				}
 			} while (brother = brother.nextSibling);
 			return 1;
@@ -381,20 +380,19 @@ counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
 /* almost the same as the previous one */
-		var i = child.nodeIndexLast || 0;
-		ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0;
+		var i = child.nodeIndexLast || 0,
+			a = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0,
+			b = ind[1];
 		if (i) {
-			return !( (i + ind[3]) % ind[1]);
+			return !( (i + a) % b);
 		} else {
-			var brother = child.parentNode.firstChild;
+			var brother = child.parentNode.lastChild;
 			i++;
 			do {
-				if (brother.nodeType === 1) {
-					if ((brother.nodeIndex = i++) && child === brother && ((i + ind[3]) % ind[1])) {
-						return 0;
-					}
+				if (brother.nodeType === 1 && (brother.nodeLastIndex = i++) && child === brother && ((i + a) % b)) {
+					return 0;
 				}
-			} while (brother = brother.nextSibling);
+			} while (brother = brother.previousSibling);
 			return 1;
 		}
 	},
@@ -654,8 +652,9 @@ also track cases when module is already loaded
 			_.modules[alias].deps['yass'][_.modules[alias].deps['yass'].length] = a;
 			_.modules[alias].notloaded++;
 		}
-/* avoid additional loops for loading module */
-		if (!_.modules[alias].status) {
+/* prevent race conditions */
+		if (typeof _.modules[alias].status === 'undefined') {
+			_.modules[alias].status = 0;
 /* 11999 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts - 1 */
 			loader(alias, text, 11999, aliases);
 		}
