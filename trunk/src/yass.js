@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-16 00:45:16 +3000 (Fri, 16 Jan 2009) $
-* $Rev: 351 $
+* $Date: 2008-01-16 16:52:17 +3000 (Fri, 16 Jan 2009) $
+* $Rev: 352 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -624,7 +624,7 @@ _.load = function (aliases, text) {
 		a;
 /* 
 we can define several modules for 1 component:
-yass-component-module1-module2-module3
+yass-module-item1-item2-item3
 */
 	aliases = aliases.split("-");
 	while (alias = aliases[idx++]) {
@@ -678,7 +678,7 @@ _.postloader = function (e) {
 	module.status = 3;
 /*
 if something isn't loaded yet - count this
-to handle last component onload
+to handle last module onload
 */
 	while (aliases[idx] && _.modules[aliases[idx]].status == 2 && idx--) {}
 /* if there is more than one module to load - wait futher */
@@ -715,33 +715,16 @@ to handle last component onload
 _.win._ = _.win._ || (_.win.yass = _);
 })();
 
-/* autoload of components */
+/* autoload of modules */
 _.ready(function() {
-	var components = _('[class^=yass-component-]'),
+	var modules = _('[class^=yass-module-]'),
 		item,
-		len = components.length,
+		len = modules.length,
 		idx = 0;
 	while (idx < len) {
-		item = components[idx++];
+		item = modules[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load(item.className.slice(item.className.indexOf('yass-component-') + 15), item.title);
+		_.load(item.className.slice(item.className.indexOf('yass-module-') + 15), item.title);
 		item.title = null;
 	}
 });
-/* garbage cleaner adds 10-100ms to window unload */
-if (_.browser.ie) {
-	_.bind(_.win, 'unload', function(){
-		var nodes = _('*'),
-			idx = nodes.length,
-			node,
-			events = ['onblur','onclick','onchange','ondblclick','onerror','onfocus','onkeydown','onkeypress','onkeyup','onload','onmousedown','onmousemove','onmouseout','onmouseover','onmouseup','onreadystatechange','onresize','onscroll','onselect','onsubmit','onunload'],
-			i;
-		while (idx--) {
-			node = nodes[idx];
-			i = 21;
-			while (i--) {
-				node[events[i]] = null;
-			}
-		}
-	});
-}
