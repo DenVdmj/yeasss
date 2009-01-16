@@ -724,7 +724,7 @@ _.ready(function() {
 	while (idx < len) {
 		item = modules[idx++];
 /* script filename should be equal to yass.[module name].js */
-		_.load(item.className.slice(item.className.indexOf('yass-module-') + 15), item.title);
+		_.load(item.className.slice(item.className.indexOf('yass-module-') + 12), item.title);
 		item.title = null;
 	}
 });
