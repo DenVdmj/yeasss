@@ -1,0 +1,13 @@
+<!--#set var="TITLE" value="Team :: YASS" --><!--#set var="LANG" value="" --><!--#include virtual="/includes/top.shtml" -->
+<div class="mcontent">
+<h2>YASS Team</h2>
+<dl>
+<dt><a href="http://webo.name/">Nikolay Matsievsky</a> aka sunnybear</dt>
+<dd>Core development. Extremal speed tests. General coordination.</dd>
+<dt>Alexander Beshkenadze</dt>
+<dd>Plugins development. Standards-compaint tests. Intergration with other libraries.</dd>
+<dt><a href="http://jsx.ru/indexeng.html">Andrew Sumin</a></dt>
+<dd>JSX library ideas: modules loading and general architechture, chaining events implementation.</dd>
+</dl>
+</div>
+<!--#include virtual="/includes/bottom.shtml" -->

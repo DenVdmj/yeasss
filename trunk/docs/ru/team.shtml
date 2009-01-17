@@ -1,0 +1,13 @@
+<!--#set var="TITLE" value="Team :: YASS" --><!--#set var="LANG" value="/ru" --><!--#include virtual="/includes/top.shtml" -->
+<div class="mcontent">
+<h2>Команда YASS</h2>
+<dl>
+<dt><a href="http://webo.in/">Николай Мациевский</a> aka sunnybear</dt>
+<dd>Разработка ядра. Экстремальные тесты на производительность. Общая координация проекта.</dd>
+<dt>Александр Бешкенадзе aka akira</dt>
+<dd>Разрбаотка модулей. Тесты на совместимость стандартам. Интеграция с другими библиотеками.</dd>
+<dt><a href="http://jsx.ru/">Андрей Сумин</a></dt>
+<dd>JSX концепция: общая архитектура и загрузка модулей, цепочки произвольных событий.</dd>
+</dl>
+</div>
+<!--#include virtual="/includes/bottom.shtml" -->

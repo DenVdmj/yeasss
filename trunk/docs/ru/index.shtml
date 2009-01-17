@@ -1,4 +1,5 @@
 <!--#set var="TITLE" value="Documentation :: YASS" --><!--#set var="LANG" value="/ru" --><!--#include virtual="/includes/top.shtml" -->
+<div class="documentation">
 <h2>Документация</h2>
 <p>YASS &mdash; это небольшая JavaScript-библиотека для выбора элементов из DOM-дерева по CSS-селекторам. Она поддерживает некоторые наиболее распространенные комбинации CSS-селекторов, которые <a href="http://www.w3.org/TR/2005/WD-css3-selectors-20051215/" rel="nofollow">приведены в CSS3-спецификации</a>.</p>
 
@@ -47,5 +48,5 @@
 <li>отрицательный селектор <code>:not(...)</code>,</li>
 <li>множественные селекторы <code>[class=class1][class=class2]</code>.</li>
 </ul>
-
+</div>
 <!--#include virtual="/includes/bottom.shtml" -->
