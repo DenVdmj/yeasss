@@ -9,8 +9,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-13 00:08:0$ +3000 (Tue, 13 Jan 2009) $
-* $Rev: 7 $
+* $Date: 2008-01-19 10:35:18 +3000 (Mon, 19 Jan 2009) $
+* $Rev: 8 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -27,24 +27,24 @@ var _ = function (selector, root) {
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
 */
-		var firstLetter = selector.charAt(0);
+		var firstLetter = selector.charAt(0),
+			sets = [],
+			idx = 0;
 		switch (firstLetter) {
 			case '#':
-				var id = selector.slice(1),
-					sets = _.doc.getElementById(id);
+				idx = selector.slice(1);
+				sets = _.doc.getElementById(idx);
 /*
 workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== id) {
-					sets = _.doc.all[id];
+				if (_.doc.all && sets.id !== idx) {
+					sets = _.doc.all[idx];
 				}
 				return sets ? [sets] : [];
 			case '.':
-				var klass = selector.slice(1),
-					idx = 0,
-					sets = [];
+				var klass = selector.slice(1);
 				if (_.doc.getElementsByClassName) {
 					return (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
@@ -61,7 +61,6 @@ Get all matching elements with this id
 					return idx ? sets : [];
 				}
 			default:
-				var sets;
 				return (idx = (sets = root.getElementsByTagName(selector)).length) ? sets : [];
 		}
 	} else {
@@ -82,7 +81,15 @@ Split by RegExp, thx to tenshi.
 				groups = selector.split(/ *, */),
 				group,
 /* sets of nodes, to handle comma-separated selectors */
-				sets = [];
+				sets = [],
+				singles,
+				singles_length,
+/* to handle RegExp for single selector */
+				single,
+				i,
+/* current set of nodes - to handle single selectors */
+				nodes,
+				tag, id, klass, newNodes, idx, J, cjild, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -90,16 +97,10 @@ Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
 to % to avoid collisions. Additional replace is required for IE.
 */
-				var singles = group.split(/ +/),
-					singles_length = singles.length,
-/* to handle RegExp for single selector */
-					single,
-					i = 0,
-/*
-current set of nodes - to handle single selectors -
-is cleanded up with DOM root
-*/
-					nodes = [root];
+				singles_length = (singles = group.split(/ +/)).length;
+				i = 0;
+/* is cleanded up with DOM root */
+				nodes = [root];
 /*
 John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
@@ -110,18 +111,18 @@ simple exec. Thx to GreLI for 'greed' RegExp
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
 */
-					var tag = single[1] || '*',
-						id = single[2],
-						klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '',
+					tag = single[1] || '*';
+					id = single[2];
+					klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
 /* new nodes array */
-						newNodes = [],
-/* cached length of new nodes array */
-						idx = 0,
-/* length of root nodes */
-						J = 0,
-						child,
+					newNodes = [];
+/*
+cached length of new nodes array
+and length of root nodes
+*/
+					idx = J = 0;
 /* if we need to mark node with expando yeasss */
-						last = i === singles_length;
+					last = i === singles_length;
 /* loop in all root nodes */
 					while (child = nodes[J++]) {
 /*
@@ -129,9 +130,8 @@ find all TAGs or just return all possible neibours.
 Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
-						var childs = child.getElementsByTagName(tag),
-							item,
-							h = 0;
+						childs = child.getElementsByTagName(tag);
+						h = 0;
 						while (item = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
@@ -165,7 +165,7 @@ Then mark selected element with expando
 				}
 			}
 /* define sets length to clean yeasss */
-			var idx = (sets = sets || []).length;
+			idx = (sets = sets || []).length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
