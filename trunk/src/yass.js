@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 22:01:22 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 358 $
+* $Date: 2008-01-22 22:11:23 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 359 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -262,21 +262,21 @@ Then mark selected element with expando
 						}
 					}
 				}
-/* inialize sets with nodes */
-				sets = sets.length ? sets : nodes;
-/* fixing bug on non-existent selector, thx to deerua */
 				if (concat) {
 /* if sets isn't an array - create new one */
-					if (!sets.concat) {
+					if (!nodes.concat) {
 						newNodes = [];
 						h = 0;
-						while (item = sets[h]) {
+						while (item = nodes[h]) {
 							newNodes[h++] = item;
 						}
-						sets = newNodes;
+						nodes = newNodes;
 /* concat is faster than simple looping */
 					}
-					sets = sets.concat(nodes.length == 1 ? nodes[0] : nodes);
+					sets = nodes.concat(sets.length == 1 ? sets[0] : sets);
+				} else {
+/* inialize sets with nodes */
+					sets = nodes;
 				}
 			}
 /* define sets length to clean up expando */
