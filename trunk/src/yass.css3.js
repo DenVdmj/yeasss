@@ -1,14 +1,14 @@
 (function(){
 /*
-* YASS 0.3.4 - The fastest CSS selectors JavaScript library
+* YASS 0.3.8 - The fastest CSS selectors JavaScript library
 * Experimental branch of YASS - CSS3 selectors with cache only
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 13:01:19 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 11 $
+* $Date: 2008-01-22 19:04:20 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 12 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -22,8 +22,8 @@ Subtree added, second argument, thx to tenshi.
 Return cache if exists. Third argument.
 Return not cached result if root specified, thx to Skiv
 */
-	if (_.cache[selector] && !noCache && !root) {
-		return  _.cache[selector];
+	if (_.c[selector] && !noCache && !root) {
+		return  _.c[selector];
 	}
 /* clean root with document */
 	root = root || _.doc;
@@ -133,60 +133,65 @@ Split by RegExp, thx to tenshi.
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
+try to avoid work - check cache. Will glitch a few
+on concatinating different cached results.
+*/
+				if (!(nodes = _.c[group])) {
+/*
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
 to % to avoid collisions. Additional replace is required for IE.
 Replace ~ in attributes to & to avoid collisions.
-*/
-				singles_length = (singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(\[[^\]]+)~/,"$1&").replace(/(~|>|\+)/," $1 ").split(/ +/)).length;
-				i = 0;
-				ancestor = ' ';
+*/	
+					singles_length = (singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(\[[^\]]+)~/,"$1&").replace(/(~|>|\+)/," $1 ").split(/ +/)).length;
+					i = 0;
+					ancestor = ' ';
 /* is cleanded up with DOM root */
-				nodes = [root];
+					nodes = [root];
 /*
 John's Resig fast replace works a bit slower than
 simple exec. Thx to GreLI for 'greed' RegExp
 */
-				while (single = singles[i++]) {
+					while (single = singles[i++]) {
 /* simple comparison is faster than hash */
-					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+						if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
+							single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
 */
-						tag = single[1] || '*';
-						id = single[2];
-						klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
-						attr = single[4];
-						eql = single[5] || '';
-						modificator = single[7];
+							tag = single[1] || '*';
+							id = single[2];
+							klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
+							attr = single[4];
+							eql = single[5] || '';
+							modificator = single[7];
 /*
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-						ind = modificator === 'nth-child' || modificator === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8];
+							ind = modificator === 'nth-child' || modificator === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8];
 /* new nodes array */
-						newNodes = [];
+							newNodes = [];
 /* 
 cached length of new nodes array
 and length of root nodes
 */
-						idx = J = 0;
+							idx = J = 0;
 /* if we need to mark node with expando yeasss */
-						last = i == singles_length;
+							last = i == singles_length;
 /* loop in all root nodes */
-						while (child = nodes[J++]) {
+							while (child = nodes[J++]) {
 /*
 find all TAGs or just return all possible neibours.
 Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
-							switch (ancestor) {
-								case ' ':
-									childs = child.getElementsByTagName(tag);
-									h = 0;
-									while (item = childs[h++]) {
+								switch (ancestor) {
+									case ' ':
+										childs = child.getElementsByTagName(tag);
+										h = 0;
+										while (item = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
@@ -195,62 +200,62 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
+											if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
 */
-											if (last) {
-												item.yeasss = 1;
+												if (last) {
+													item.yeasss = 1;
+												}
+												newNodes[idx++] = item;
 											}
-											newNodes[idx++] = item;
 										}
-									}
-									break;
+										break;
 /* from w3.org: "an F element preceded by an E element" */
-								case '~':
-									tag = tag.toLowerCase();
+									case '~':
+										tag = tag.toLowerCase();
 /* don't touch already selected elements */
-									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+										while ((child = child.nextSibling) && !child.yeasss) {
+											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+												if (last) {
+													child.yeasss = 1;
+												}
+												newNodes[idx++] = child;
+											}
+										}
+										break;
+/* from w3.org: "an F element immediately preceded by an E element" */
+									case '+':
+										while ((child = child.nextSibling) && child.nodeType != 1) {}
+										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 											if (last) {
 												child.yeasss = 1;
 											}
 											newNodes[idx++] = child;
 										}
-									}
-									break;
-/* from w3.org: "an F element immediately preceded by an E element" */
-								case '+':
-									while ((child = child.nextSibling) && child.nodeType != 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
-										if (last) {
-											child.yeasss = 1;
-										}
-										newNodes[idx++] = child;
-									}
-									break;
+										break;
 /* from w3.org: "an F element child of an E element" */
-								case '>':
-									var childs = child.getElementsByTagName(tag),
-										i = 0,
-										item;
-									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
-											if (last) {
-												item.yeasss = 1;
+									case '>':
+										childs = child.getElementsByTagName(tag);
+										i = 0;
+										while (item = childs[i++]) {
+											if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
+												if (last) {
+													item.yeasss = 1;
+												}
+												newNodes[idx++] = item;
 											}
-											newNodes[idx++] = item;
 										}
-									}
-									break;
+										break;
+								}
 							}
-						}
 /* put selected nodes in local nodes' set */
-						nodes = newNodes;
-					} else {
+							nodes = newNodes;
+						} else {
 /* switch ancestor ( , > , ~ , +) */
-						ancestor = single;
+							ancestor = single;
+						}
 					}
 				}
 /* inialize sets with nodes */
@@ -273,10 +278,10 @@ that must be nulled. Need this only to generic case
 		}
 	}
 /* return and cache results */
-	return _.cache[selector] = sets;
+	return _.c[selector] = sets;
 };
 /* cache for selected nodes, no leaks in IE detected */
-_.cache = {};
+_.c = {};
 /* caching global document */
 _.doc = document;
 /* function calls for CSS2/3 attributes selectors */
@@ -454,7 +459,7 @@ clean cache on DOM changes. Code copied from Sizzle
 we should ignore this for Safari, querySelectorAll removed.
 */
 if (_.doc.addEventListener) {
-  function invalidate(){ _.cache = {}; }
+  function invalidate(){ _.c = {}; }
   _.doc.addEventListener('DOMAttrModified', invalidate, false);
   _.doc.addEventListener('DOMNodeInserted', invalidate, false);
   _.doc.addEventListener('DOMNodeRemoved', invalidate, false);
