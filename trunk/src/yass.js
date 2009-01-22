@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-19 10:35:18 +3000 (Mon, 19 Jan 2009) $
-* $Rev: 354 $
+* $Date: 2008-01-22 13:01:19 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 355 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -108,7 +108,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll && selector.indexOf('!=') === -1) {
+		if (_.doc.querySelectorAll && selector.indexOf('!=') == -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -175,7 +175,7 @@ and length of root nodes
 */
 						idx = J = 0;
 /* if we need to mark node with expando yeasss */
-						last = i === singles_length;
+						last = i == singles_length;
 /* loop in all root nodes */
 						while (child = nodes[J++]) {
 /*
@@ -213,7 +213,7 @@ Then mark selected element with expando
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType === 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -223,7 +223,7 @@ Then mark selected element with expando
 									break;
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case '+':
-									while ((child = child.nextSibling) && child.nodeType !== 1) {}
+									while ((child = child.nextSibling) && child.nodeType != 1) {}
 									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
 										if (last) {
 											child.yeasss = 1;
@@ -314,14 +314,14 @@ from w3.org "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) === attr.length - value.length;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) == attr.length - value.length;
 	},
 /*
 from w3.org "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
-		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) !== -1;
+		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) != -1;
 	},
 /*
 from w3.org "an E element whose "attr" attribute has
@@ -351,7 +351,7 @@ _.modificators = {
 	'last-child': function (child) {
 			var brother = child;
 /* loop in lastChilds while nodeType isn't element */
-			while ((brother = brother.nextSibling) && brother.nodeType !== 1) {}
+			while ((brother = brother.nextSibling) && brother.nodeType != 1) {}
 /* Check for node's existence */
 			return !!brother;
 		},
@@ -374,7 +374,7 @@ _.modificators = {
 /* looping in child to find if nth expression is correct */
 			do {
 /* nodeIndex expando used from Peppy / Sizzle/ jQuery */
-				if (brother.nodeType === 1 && (brother.nodeIndex = ++i) && child === brother && ((i + a) % b)) {
+				if (brother.nodeType == 1 && (brother.nodeIndex = ++i) && child === brother && ((i + a) % b)) {
 					return 0;
 				}
 			} while (brother = brother.nextSibling);
@@ -396,7 +396,7 @@ counting from the last one"
 			var brother = child.parentNode.lastChild;
 			i++;
 			do {
-				if (brother.nodeType === 1 && (brother.nodeLastIndex = i++) && child === brother && ((i + a) % b)) {
+				if (brother.nodeType == 1 && (brother.nodeLastIndex = i++) && child === brother && ((i + a) % b)) {
 					return 0;
 				}
 			} while (brother = brother.previousSibling);
@@ -416,7 +416,7 @@ Thx to John, from Sizzle, 2008-12-05, line 416
 		},
 /* from w3.org: "an E element, only child of its parent" */
 	'only-child': function (child) {
-			return child.parentNode.getElementsByTagName('*').length !== 1;
+			return child.parentNode.getElementsByTagName('*').length != 1;
 		},
 /*
 from w3.org: "a user interface element E which is checked
