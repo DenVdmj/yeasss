@@ -129,7 +129,7 @@ Split by RegExp, thx to tenshi.
 /* current set of nodes - to handle single selectors */
 				nodes,
 /* for inner looping */
-				tag, id, klass, attr, eql, modificator, ind, newNodes, idx, J, child, last, childs, item, h;
+				tag, id, klass, attr, eql, modificator, ind, newNodes, ix, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -177,7 +177,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 cached length of new nodes array
 and length of root nodes
 */
-							idx = J = 0;
+							ix = J = 0;
 /* if we need to mark node with expando yeasss */
 							last = i == singles_length;
 /* loop in all root nodes */
@@ -208,7 +208,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[idx++] = item;
+												newNodes[ix++] = item;
 											}
 										}
 										break;
@@ -221,7 +221,7 @@ Then mark selected element with expando
 												if (last) {
 													child.yeasss = 1;
 												}
-												newNodes[idx++] = child;
+												newNodes[ix++] = child;
 											}
 										}
 										break;
@@ -232,7 +232,7 @@ Then mark selected element with expando
 											if (last) {
 												child.yeasss = 1;
 											}
-											newNodes[idx++] = child;
+											newNodes[ix++] = child;
 										}
 										break;
 /* from w3.org: "an F element child of an E element" */
@@ -244,7 +244,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[idx++] = item;
+												newNodes[ix++] = item;
 											}
 										}
 										break;
@@ -260,14 +260,17 @@ Then mark selected element with expando
 				}
 /* inialize sets with nodes */
 				sets = sets.length ? sets : nodes;
+/* define sets length */
+				idx = idx || sets.length;
 /* fixing bug on non-existent selector, thx to deerua */
 				if (groups_length > 1) {
-/* concat is faster than simple looping */
-					sets = sets.concat(nodes);
+					i = 0;
+					while (item = nodes[i++]) {
+/* can't concat cached values */
+						sets[idx++] = item;
+					}
 				}
 			}
-/* define sets length to clean yeasss */
-			idx = (sets = sets || []).length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
@@ -281,9 +284,11 @@ that must be nulled. Need this only to generic case
 	return _.c[selector] = sets;
 };
 /* cache for selected nodes, no leaks in IE detected */
-_.c = {};
+_.c = [];
 /* caching global document */
 _.doc = document;
+/* caching global window */
+_.win = window;
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
 /* from w3.org "an E element with a "attr" attribute" */
