@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 20:32:21 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 357 $
+* $Date: 2008-01-22 22:01:22 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 358 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -118,7 +118,10 @@ groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
 			var groups = selector.split(/ *, */),
-				groups_length = 0,
+/* group counter */
+				gl = groups.length - 1,
+/* if we need to concat several groups */
+				concat = !!gl,
 				group,
 				singles,
 				singles_length,
@@ -132,10 +135,10 @@ Split by RegExp, thx to tenshi.
 /* for inner looping */
 				tag, id, klass, attr, eql, modificator, ind, newNodes, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
-			while (group = groups[groups_length++]) {
+			while (group = groups[gl--]) {
 /*
 try to avoid work - check cache. Will glitch a few
-on concatinating different cached results.
+on concatinating different results with one tag.
 */
 				if (!(nodes = _.c[group])) {
 /*
@@ -262,11 +265,18 @@ Then mark selected element with expando
 /* inialize sets with nodes */
 				sets = sets.length ? sets : nodes;
 /* fixing bug on non-existent selector, thx to deerua */
-				if (groups_length > 1) {
-					if (sets.concat) {
-/* can't concat cached values */
-						sets = sets.concat(nodes.length == 1 ? nodes[0] : nodes);
+				if (concat) {
+/* if sets isn't an array - create new one */
+					if (!sets.concat) {
+						newNodes = [];
+						h = 0;
+						while (item = sets[h]) {
+							newNodes[h++] = item;
+						}
+						sets = newNodes;
+/* concat is faster than simple looping */
 					}
+					sets = sets.concat(nodes.length == 1 ? nodes[0] : nodes);
 				}
 			}
 /* define sets length to clean up expando */

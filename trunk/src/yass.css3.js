@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 19:04:20 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 12 $
+* $Date: 2008-01-22 22:01:22 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 13 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -112,12 +112,15 @@ All methods are called via . not [] - thx to arty
 /* generic function for complicated selectors */
 		} else {
 /* number of groups to merge or not result arrays */
-			var groups_length = 0,
 /*
 groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
-				groups = selector.split(/ *, */),
+			var groups = selector.split(/ *, */),
+/* group counter */
+				gl = groups.length - 1,
+/* if we need to concat several groups */
+				concat = !!gl,
 				group,
 				singles,
 				singles_length,
@@ -129,12 +132,12 @@ Split by RegExp, thx to tenshi.
 /* current set of nodes - to handle single selectors */
 				nodes,
 /* for inner looping */
-				tag, id, klass, attr, eql, modificator, ind, newNodes, ix, idx, J, child, last, childs, item, h;
+				tag, id, klass, attr, eql, modificator, ind, newNodes, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
-			while (group = groups[groups_length++]) {
+			while (group = groups[gl--]) {
 /*
 try to avoid work - check cache. Will glitch a few
-on concatinating different cached results.
+on concatinating different results with one tag.
 */
 				if (!(nodes = _.c[group])) {
 /*
@@ -177,7 +180,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 cached length of new nodes array
 and length of root nodes
 */
-							ix = J = 0;
+							idx = J = 0;
 /* if we need to mark node with expando yeasss */
 							last = i == singles_length;
 /* loop in all root nodes */
@@ -208,7 +211,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[ix++] = item;
+												newNodes[idx++] = item;
 											}
 										}
 										break;
@@ -221,7 +224,7 @@ Then mark selected element with expando
 												if (last) {
 													child.yeasss = 1;
 												}
-												newNodes[ix++] = child;
+												newNodes[idx++] = child;
 											}
 										}
 										break;
@@ -232,7 +235,7 @@ Then mark selected element with expando
 											if (last) {
 												child.yeasss = 1;
 											}
-											newNodes[ix++] = child;
+											newNodes[idx++] = child;
 										}
 										break;
 /* from w3.org: "an F element child of an E element" */
@@ -244,7 +247,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[ix++] = item;
+												newNodes[idx++] = item;
 											}
 										}
 										break;
@@ -260,17 +263,23 @@ Then mark selected element with expando
 				}
 /* inialize sets with nodes */
 				sets = sets.length ? sets : nodes;
-/* define sets length */
-				idx = idx || sets.length;
 /* fixing bug on non-existent selector, thx to deerua */
-				if (groups_length > 1) {
-					i = 0;
-					while (item = nodes[i++]) {
-/* can't concat cached values */
-						sets[idx++] = item;
+				if (concat) {
+/* if sets isn't an array - create new one */
+					if (!sets.concat) {
+						newNodes = [];
+						h = 0;
+						while (item = sets[h]) {
+							newNodes[h++] = item;
+						}
+						sets = newNodes;
+/* concat is faster than simple looping */
 					}
+					sets = sets.concat(nodes.length == 1 ? nodes[0] : nodes);
 				}
 			}
+/* define sets length to clean up expando */
+			idx = sets.length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
