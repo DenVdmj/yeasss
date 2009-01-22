@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 19:04:20 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 356 $
+* $Date: 2008-01-22 20:32:21 +3000 (Thu, 22 Jan 2009) $
+* $Rev: 357 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -113,12 +113,12 @@ All methods are called via . not [] - thx to arty
 /* generic function for complicated selectors */
 		} else {
 /* number of groups to merge or not result arrays */
-			var groups_length = 0,
 /*
 groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
-				groups = selector.split(/ *, */),
+			var groups = selector.split(/ *, */),
+				groups_length = 0,
 				group,
 				singles,
 				singles_length,
@@ -130,7 +130,7 @@ Split by RegExp, thx to tenshi.
 /* current set of nodes - to handle single selectors */
 				nodes,
 /* for inner looping */
-				tag, id, klass, attr, eql, modificator, ind, newNodes, ix, idx, J, child, last, childs, item, h;
+				tag, id, klass, attr, eql, modificator, ind, newNodes, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -178,7 +178,7 @@ Example used from Sizzle, rev. 2008-12-05, line 362.
 cached length of new nodes array
 and length of root nodes
 */
-							ix = J = 0;
+							idx = J = 0;
 /* if we need to mark node with expando yeasss */
 							last = i == singles_length;
 /* loop in all root nodes */
@@ -209,7 +209,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[ix++] = item;
+												newNodes[idx++] = item;
 											}
 										}
 										break;
@@ -222,7 +222,7 @@ Then mark selected element with expando
 												if (last) {
 													child.yeasss = 1;
 												}
-												newNodes[ix++] = child;
+												newNodes[idx++] = child;
 											}
 										}
 										break;
@@ -233,7 +233,7 @@ Then mark selected element with expando
 											if (last) {
 												child.yeasss = 1;
 											}
-											newNodes[ix++] = child;
+											newNodes[idx++] = child;
 										}
 										break;
 /* from w3.org: "an F element child of an E element" */
@@ -245,7 +245,7 @@ Then mark selected element with expando
 												if (last) {
 													item.yeasss = 1;
 												}
-												newNodes[ix++] = item;
+												newNodes[idx++] = item;
 											}
 										}
 										break;
@@ -261,17 +261,16 @@ Then mark selected element with expando
 				}
 /* inialize sets with nodes */
 				sets = sets.length ? sets : nodes;
-/* define sets length */
-				idx = idx || sets.length;
 /* fixing bug on non-existent selector, thx to deerua */
 				if (groups_length > 1) {
-					i = 0;
-					while (item = nodes[i++]) {
+					if (sets.concat) {
 /* can't concat cached values */
-						sets[idx++] = item;
+						sets = sets.concat(nodes.length == 1 ? nodes[0] : nodes);
 					}
 				}
 			}
+/* define sets length to clean up expando */
+			idx = sets.length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
