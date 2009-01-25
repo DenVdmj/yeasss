@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 22:11:23 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 359 $
+* $Date: 2009-01-26 00:51:24 +3000 (Mon, 26 Jan 2009) $
+* $Rev: 360 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -159,7 +159,7 @@ simple exec. Thx to GreLI for 'greed' RegExp
 					while (single = singles[i++]) {
 /* simple comparison is faster than hash */
 						if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-							single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+							single = single.match(/([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
@@ -483,11 +483,11 @@ _.ready = function (fn) {
 /* w/o any param works as executer */
 	} else {
 		if (!_.isReady){
+			_.isReady = 1;
 			var idx = _.ready.list.length;
 			while (idx--) {
 				_.ready.list[idx]();
 			}
-			_.isReady = 1;
 		}
 	}
 };
