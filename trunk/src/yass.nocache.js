@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-22 13:01:19 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 11 $
+* $Date: 2009-01-26 00:58:25 +3000 (Mon, 26 Jan 2009) $
+* $Rev: 12 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -28,10 +28,10 @@ Subtree added, second argument, thx to tenshi.
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
 */
-		var firstLetter = selector.charAt(0),
-			sets = [],
-			idx = 0;
-		switch (firstLetter) {
+		var idx = 0,
+			sets = [];
+/* the only call -- no cache, thx to GreLI */
+		switch (selector.charAt(0)) {
 			case '#':
 				idx = selector.slice(1);
 				sets = _.doc.getElementById(idx);

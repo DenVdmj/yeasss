@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 00:51:24 +3000 (Mon, 26 Jan 2009) $
-* $Rev: 360 $
+* $Date: 2009-01-26 00:58:25 +3000 (Mon, 26 Jan 2009) $
+* $Rev: 361 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -36,9 +36,9 @@ Return not cached result if root specified, thx to Skiv
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
 */
-		var firstLetter = selector.charAt(0),
-			idx = 0;
-		switch (firstLetter) {
+		var idx = 0;
+/* the only call -- no cache, thx to GreLI */
+		switch (selector.charAt(0)) {
 			case '#':
 				idx = selector.slice(1);
 				sets = _.doc.getElementById(idx);
