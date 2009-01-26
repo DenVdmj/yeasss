@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 00:58:25 +3000 (Mon, 26 Jan 2009) $
-* $Rev: 12 $
+* $Date: 2009-01-26 11:04:26 +3000 (Mon, 26 Jan 2009) $
+* $Rev: 13 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -66,9 +66,9 @@ Get all matching elements with this id
 					nodes = root.getElementsByTagName('*'),
 					i = 0,
 					ind = selector.replace(/[^(]*\(([^)]*)\)/,"$1"),
-					modificator = selector.replace(/\(.*/,'');
+					mod = selector.replace(/\(.*/,'');
 				while (node = nodes[i++]) {
-					if (_.modificators[modificator] && !_.modificators[modificator](node, ind)) {
+					if (_.mods[mod] && !_.mods[mod](node, ind)) {
 						sets[idx++] = node;
 					}
 				}
@@ -96,7 +96,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.doc.querySelectorAll && selector.indexOf('!=') == -1) {
+		if (_.q && selector.indexOf('!=') == -1) {
 			return root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -119,7 +119,7 @@ Split by RegExp, thx to tenshi.
 /* current set of nodes - to handle single selectors */
 				nodes,
 /* for inner looping */
-				tag, id, klass, attr, eql, modificator, ind, newNodes, idx, J, child, last, childs, item, h;
+				tag, id, klass, attr, eql, mod, ind, newNodes, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
 			while (group = groups[groups_length++]) {
 /*
@@ -150,12 +150,12 @@ tag, id, class, attribute, value, modificator, index.
 						klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
 						attr = single[4];
 						eql = single[5] || '';
-						modificator = single[7];
+						mod = single[7];
 /*
 for nth-childs modificator already transformed into array.
 Example used from Sizzle, rev. 2008-12-05, line 362.
 */
-						ind = modificator === 'nth-child' || modificator === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8];
+						ind = mod === 'nth-child' || mod === 'nth-last-child' ? /(?:(-?\d*)n)?(?:(%|-)(\d*))?/.exec(single[8] === 'even' && '2n' || single[8] === 'odd' && '2n%1' || !/\D/.test(single[8]) && '0n%' + single[8] || single[8]) : single[8];
 /* new nodes array */
 						newNodes = [];
 /* 
@@ -185,7 +185,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
+										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -202,7 +202,7 @@ Then mark selected element with expando
 									tag = tag.toLowerCase();
 /* don't touch already selected elements */
 									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -213,7 +213,7 @@ Then mark selected element with expando
 /* from w3.org: "an F element immediately preceded by an E element" */
 								case '+':
 									while ((child = child.nextSibling) && child.nodeType != 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](child, ind) : modificator)) {
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 										if (last) {
 											child.yeasss = 1;
 										}
@@ -226,7 +226,7 @@ Then mark selected element with expando
 										i = 0,
 										item;
 									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.modificators[modificator] ? _.modificators[modificator](item, ind) : modificator)) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 											if (last) {
 												item.yeasss = 1;
 											}
@@ -327,13 +327,13 @@ function calls for CSS2/3 modificatos. Specification taken from
 http://www.w3.org/TR/2005/WD-css3-selectors-20051215/
 on success return negative result.
 */
-_.modificators = {
-/* from w3.org: "an E element, first child of its parent" */
+_.mods = {
+/* W3C: "an E element, first child of its parent" */
 	'first-child': function (child) {
 /* implementation was taken from jQuery.1.2.6, line 1394 */
 			return child.parentNode.getElementsByTagName('*')[0] !== child;
 		},
-/* from w3.org: "an E element, last child of its parent" */
+/* W3C: "an E element, last child of its parent" */
 	'last-child': function (child) {
 			var brother = child;
 /* loop in lastChilds while nodeType isn't element */
@@ -341,11 +341,11 @@ _.modificators = {
 /* Check for node's existence */
 			return !!brother;
 		},
-/* from w3.org: "an E element, root of the document" */
-	'root': function (child) {
+/* W3C: "an E element, root of the document" */
+	root: function (child) {
 			return child.nodeName.toLowerCase() !== 'html';
 		},
-/* from w3.org: "an E element, the n-th child of its parent" */
+/* W3C: "an E element, the n-th child of its parent" */
 	'nth-child': function (child, ind) {
 		var i = child.nodeIndex || 0,
 			a = ind[3] = ind[3] ? (ind[2] === '%' ? -1 : 1) * ind[3] : 0,
@@ -368,7 +368,7 @@ _.modificators = {
 		}
 	},
 /*
-from w3.org: "an E element, the n-th child of its parent,
+W3C: "an E element, the n-th child of its parent,
 counting from the last one"
 */
 	'nth-last-child': function (child, ind) {
@@ -393,41 +393,41 @@ counting from the last one"
 Rrom w3.org: "an E element that has no children (including text nodes)".
 Thx to John, from Sizzle, 2008-12-05, line 416
 */
-	'empty': function (child) {
+	empty: function (child) {
 			return !!child.firstChild;
 		},
 /* thx to John, stolen from Sizzle, 2008-12-05, line 413 */
-	'parent': function (child) {
+	parent: function (child) {
 			return !child.firstChild;
 		},
-/* from w3.org: "an E element, only child of its parent" */
+/* W3C: "an E element, only child of its parent" */
 	'only-child': function (child) {
 			return child.parentNode.getElementsByTagName('*').length != 1;
 		},
 /*
-from w3.org: "a user interface element E which is checked
+W3C: "a user interface element E which is checked
 (for instance a radio-button or checkbox)"
 */
-	'checked': function (child) {
+	checked: function (child) {
 			return !child.checked;
 		},
 /*
-from w3.org: "an element of type E in language "fr"
+W3C: "an element of type E in language "fr"
 (the document language specifies how language is determined)"
 */
-	'lang': function (child, ind) {
-			return child.lang !== ind && _.doc.getElementsByTagName('html')[0].lang !== ind;
+	lang: function (child, ind) {
+			return child.lang !== ind && _.doc.documentElement.lang !== ind;
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 398 */
-	'enabled': function (child) {
+	enabled: function (child) {
 			return child.disabled || child.type === 'hidden';
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 401 */
-	'disabled': function (child) {
+	disabled: function (child) {
 			return !child.disabled;
 		},
 /* thx to John, from Sizzle, 2008-12-05, line 407 */
-	'selected': function(elem){
+	selected: function(elem){
 /*
 Accessing this property makes selected-by-default
 options in Safari work properly.
@@ -436,6 +436,8 @@ options in Safari work properly.
       return !child.selected;
     }
 };
+/* cached check for querySelectorAll */
+_.q = !!_.doc.querySelectorAll
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
