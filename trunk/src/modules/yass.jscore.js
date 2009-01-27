@@ -1,22 +1,20 @@
 (function(ie) {
 /*
 * YASS 0.3.8 - The fastest CSS selectors JavaScript library
-* js-core 2.7.0 - lightweight JavaScript framework
+* js-core 2.7.2 - lightweight JavaScript framework
+* js-core-ajax 2.5.0 - ajax module for js-core
 *
 * Copyright (c) 2009 Nikolay Matsievsky aka sunnybear (webo.in),
 * 2009 Dmitry Korobkin aka Octane (www.js-core.ru)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 00:07:00 +3000 (Thu, 22 Jan 2009) $
-* $Rev: 1 $
+* $Date: 2009-01-27 22:14:01 +3000 (Tue, 27 Jan 2009) $
+* $Rev: 2 $
 */
-var core = _.core = function(arg) {
-	if (this.core) return new this.core(arg);
-	this.node = core.id(arg);
-};
+(function(win, doc, core, ie, undefined) {
 core.forEach = function(obj, func, context) {
-	if (obj.length != undefined) {
+	if(obj.length !== undefined) {
 		var i = -1;
 		while(obj[++i]) if(func.call(context, obj[i], i, obj) === false) break;
 	}
@@ -31,29 +29,26 @@ core.extend = function(obj, hash) {
 };
 core.extend(core, {
 	ie: ie,
-	cache: _.c,
+	cache: {},
 	clear: function(node) {
-		_.c = {};
+		node.hasChildNodes() ? this.cache = {} : delete this.cache[node.id];
 		return node;
 	},
 	id: function(arg) {
-		return arg.nodeType ? arg : _.('#' + arg)[0];
-	},
-	tag: function() {
-		return _(hash.tag || '*', hash.node);
+		return arg.split ? this.cache[arg] || (this.cache[arg] = doc.getElementById(arg)) : arg;
 	},
 	create: function(arg) {
-		return arg.nodeType ? arg : _.doc.createElement(arg);
+		return arg.nodeType ? arg : doc.createElement(arg);
 	},
 	insert: function(node, arg, before) {
 		return node.insertBefore(this.create(arg), before);
 	},
 	sibling: function(node, dir, tag) {
-		if (tag) tag = tag.toUpperCase();
-		while (node = node[dir]) if (node.nodeType == 1 && (!tag || node.tagName === tag)) return node;
+		if(tag) tag = tag.toUpperCase();
+		while(node = node[dir]) if(node.nodeType == 1 && (tag ? node.tagName == tag : true)) return node;
 	},
 	bind: function() {
-		return _.win.addEventListener ? function(node, type, listener) {
+		return win.addEventListener ? function(node, type, listener) {
 			node.addEventListener(type, listener, false);
 		} : function(expr) {
 			return function(node, type, listener) {
@@ -62,7 +57,7 @@ core.extend(core, {
 		}(/^function\s*\(/);
 	}(),
 	unbind: function() {
-		return _.win.removeEventListener ? function(node, type, listener) {
+		return win.removeEventListener ? function(node, type, listener) {
 			node.removeEventListener(type, listener, false);
 		} : function(node, type, listener) {
 			node.detachEvent('on' + type, listener);
@@ -74,67 +69,10 @@ core.extend(core, {
 	toArray: function(arg) {
 		return arg.split ? this.trim.all(arg).split(/\s+/) : arg;
 	},
-	attr: function(hash) {
-		if(hash.attr.length) {
-			var array = [],
-				idx = 0;
-			this.forEach(_(hash.tag, hash.node), function(node) {
-				var key = true;
-				this.forEach(core.toArray(hash.attr), function(attr) {
-					if(!node[attr]) return key = false;
-				});
-				if (key) array[idx++] = node;
-			}, this);
-			return array;
-		}
-		else if(hash.node) this.forEach(hash.attr, function(attr) {
-			hash.node[attr] = hash.attr[attr];
+	attr: function(node, params) {
+		this.forEach(params, function(key, value) {
+			node[key] = value;
 		});
-	},
-	value: function(hash) {
-		var array = [],
-			idx = 0;
-		this.forEach(_(hash.tag, hash.node), function(node) {
-			var key = true;
-			this.forEach(hash.attr, function(attr) {
-				if(node[attr] !== hash.attr[attr]) return key = false;
-			});
-			if(key) array[idx++] = node;
-		}, this);
-		return array;		
-	},
-	child: function(node, tags) {
-		var i = -1, list = node.childNodes, array = [],	idx = 0;
-		if(tags) {
-			if(tags.join) tags = tags.join(' ');
-			tags = tags.toUpperCase();
-		}
-		while(list[++i]) if(list[i].nodeType == 1) if(tags ? this.inStr(tags, list[i].tagName) : true) array[idx++] = list[i];
-		return array;
-	},
-	tags: function(hash) {
-		if (hash.tag) {
-			var array = [],
-				idx = 0;
-			this.forEach(this.toArray(hash.tag), function(tag) {
-				this.forEach(_(tag, hash.node), function(node) {
-					array[idx++] = node;
-				});
-			}, this);
-			return array;
-		}
-		else return _('*', hash.node);
-	},
-	values: function(hash) {
-		var str = hash.value.join ? hash.value.join(' ') : hash.value, array = [], idx = 0;
-		this.forEach(this.attr({node: hash.node, tag: hash.tag, attr: hash.attr}), function(node) {
-			var key = false;
-			this.forEach(core.toArray(node[hash.attr]), function(value) {
-				if(core.inStr(str, value)) return !(key = true);
-			});
-			if(key) array[idx++] = node;
-		}, this);
-		return array;
 	},
 	css: function() {
 		return ie ? function(change) {
@@ -143,11 +81,11 @@ core.extend(core, {
 			};
 		}(function(prop) {
 			var expr = /-([a-z])/g;
-			return prop === 'float' ? 'styleFloat' : expr.test(prop) ? prop.replace(expr, function () {
+			return prop == 'float' ? 'styleFloat' : expr.test(prop) ? prop.replace(expr, function () {
 				return arguments[1].toUpperCase();
 			}) : prop;
 		}) : function(node, property) {
-			return _.doc.defaultView.getComputedStyle(node, null).getPropertyValue(property);
+			return doc.defaultView.getComputedStyle(node, null).getPropertyValue(property);
 		};
 	}(),
 	context: function(fn, context) {
@@ -158,27 +96,14 @@ core.extend(core, {
 	preventDefault: function _fn() {
 		new core.event(arguments[0]).preventDefault();
 	},
-	t: function(tag) {
-		return new this.list(this.tags({tag: tag}), false);
-	},
 	n: function(tag) {
-		return new this(_.doc.createElement(tag));
-	},
-	c: function(arg, tag) {
-		return this.prototype.findClass(arg, tag);
-	},
-	a: function(arg, tag) {
-		return this.prototype.find(arg, tag);
-	},
-	f: function(attr, value, tag) {
-		return this.prototype.findAttr(attr, value, tag);
+		return new this(doc.createElement(tag));
 	},
 	makeArray: function() {
 		return ie ? function(list) {
-			var array = [],
-				idx = 0;
+			var array = [], i = 0;
 			this.forEach(list, function(el) {
-				array[idx++] = el;
+				array[i++] = el;
 			});
 			return array;
 		} : function(list) {
@@ -189,18 +114,18 @@ core.extend(core, {
 		if(this.list) return new this.list(items, filter);
 		if(filter === false) this.items = items || [];
 		else {
-			var i = -1, j = 0, idx = 0;
+			var i = j = k = -1;
 			this.items = [];
-			while(items[++i]) if(items[i].nodeType == 1 && (filter ? filter.call(items[i], j++) : true)) this.items[idx++] = items[i];
+			while(items[++i]) if(items[i].nodeType == 1 && (filter ? filter.call(items[i], ++j) : true)) this.items[++k] = items[i];
 		}
 	},
-	timer: function(time, fn, arg) {
-		if(this.timer) return new this.timer(time, fn, arg);
-		core.extend(this, {time: time, fn: fn, arg: arg, enabled: false});
+	timer: function(time, fn, context) {
+		if(this.timer) return new this.timer(time, fn, context);
+		core.extend(this, {time: time, fn: fn, context: context, enabled: false});
 	},
 	event: function(event) {
-		event = event || _.win.event;
-		if (this.event) return new this.event(event);
+		event = event || win.event;
+		if(this.event) return new this.event(event);
 		this.object = event;
 	},
 	trim: function(str) {
@@ -208,10 +133,6 @@ core.extend(core, {
 	}
 });
 core.prototype = {
-	child: function(tag, bool) {
-		if(tag) return new core.list(typeof tag === 'boolean' ? core.tags({node: this.node}) : (bool ? core.tags({node: this.node, tag: tag}) : core.child(this.node, tag)), false);
-		else return new core.list(core.child(this.node), false);
-	},
 	parent: function() {
 		return new core(this.node.parentNode);
 	},
@@ -265,8 +186,8 @@ core.prototype = {
 		return ie ? function(arg, side) {
 			return new core(this.node.applyElement(core.create(arg), side));
 		} : function(arg, side) {
-			if(side === 'inside') {
-				var nodes = _doc.createDocumentFragment();
+			if(side == 'inside') {
+				var nodes = doc.createDocumentFragment();
 				core.forEach(core.makeArray(this.node.childNodes), function(node) {
 					nodes.appendChild(node);
 				});
@@ -285,18 +206,18 @@ core.prototype = {
 	},
 	remove: function() {
 		core.clear(this.node).parentNode.removeChild(this.node);
-		return null;
+		return this;
 	},
 	html: function(str) {
-		if (str != undefined) {
+		if(str !== undefined) {
 			this.node.innerHTML = str;
 			return this;
 		}
 		else return this.node.innerHTML;
 	},
 	text: function(str) {
-		if(str != undefined) {
-			this.empty().node.appendChild(_.doc.createTextNode(str));
+		if(str !== undefined) {
+			this.empty().node.appendChild(doc.createTextNode(str));
 			return this;
 		}
 		else return this.node.innerText || this.node.textContent;
@@ -316,12 +237,12 @@ core.prototype = {
 	}('preventDefaultOn'),
 	bind: function(type, listener, def) {
 		core.bind(this.node, type, listener);
-		if(typeof def === 'boolean') this.useDefault(type, def);
+		if(def !== undefined) this.useDefault(type, def);
 		return this;
 	},
 	unbind: function(type, listener, def) {
 		core.unbind(this.node, type, listener);
-		if(typeof def === 'boolean') this.useDefault(type, def);
+		if(def !== undefined) this.useDefault(type, def);
 		return this;
 	},
 	exist: function(exist, die) {
@@ -381,15 +302,14 @@ core.prototype = {
 	},
 	attr: function(arg) {
 		if(arg.join || arg.split) {
-			var array = [],
-				idx = 0;
+			var array = [], i = 0;
 			core.forEach(core.toArray(arg), function(attr) {
-				array[idx++] = this[attr];
+				array[i++] = this[attr];
 			}, this.node);
-			return idx == 1 ? array[0] : array;
+			return array.length == 1 ? array[0] : array;
 		}
 		else {
-			core.attr({node: this.node, attr: arg});
+			core.attr(this.node, arg);
 			return this;
 		}
 	},
@@ -400,13 +320,7 @@ core.prototype = {
 		return this;
 	},
 	val: function(str) {
-		return str != undefined ? this.attr({value: str}): this.attr('value');
-	},
-	find: function(arg, tag) {
-		return new core.list(arg.join || arg.split ? core.attr({node: this.node, tag: tag, attr: arg}) : core.value({node: this.node, tag: tag, attr: arg}), false);
-	},
-	findAttr: function(attr, value, tag) {
-		return new core.list(core.values({node: this.node, tag: tag, attr: attr, value: value}), false);
+		return str !== undefined ? this.attr({value: str}): this.attr('value');
 	},
 	is: function(arg, tag) {
 		if(arg) {
@@ -415,27 +329,23 @@ core.prototype = {
 				core.forEach(arg, function(attr) {
 					if(this[attr] != arg[attr]) return !(key = true);
 				}, this.node);
-				if(tag && !key) key = this.node.tagName !== tag.toUpperCase();
+				if(tag && !key) key = this.node.tagName != tag.toUpperCase();
 				return !key;
 			}
-			else return this.node.tagName === arg.toUpperCase();
+			else return this.node.tagName == arg.toUpperCase();
 		}
 		else return this.exist();
 	},
-	findClass: function(arg, tag) {
-		return new core.list(core.values({node: this.node, tag: tag, attr: 'className', value: arg}), false);
-	},
 	css: function(arg) {
 		if(arg.join || arg.split) {
-			var array = [],
-				idx = 0;
+			var array = [], i = 0;
 			core.forEach(core.toArray(arg), function(prop) {
-				array[idx++](core.css(this, prop));
+				array[i++] = core.css(this, prop);
 			}, this.node);
-			return idx == 1 ? array[0] : array;
+			return array.length == 1 ? array[0] : array;
 		}
 		else {
-			core.attr({node: this.node.style, attr: arg});
+			core.attr(this.node.style, arg);
 			return this;
 		}		
 	},
@@ -446,21 +356,21 @@ core.prototype = {
 		return this.css({display: type || 'block', visibility: 'visible'});
 	},
 	visible: function() {
-		return this.css(['display']) !== 'none' && this.css(['visibility']) !== 'hidden';
+		return this.css(['display']) != 'none' && this.css(['visibility']) != 'hidden';
 	},
 	toggle: function(type) {
 		return this.visible() ? this.hide() : this.show(type);
 	},
 	opacity: function() {
 		return ie ? function(level) {
-			if(level != undefined) return this.css({filter: 'alpha(opacity=' + level * 100 + ')'});
+			if(level !== undefined) return this.css({filter: 'alpha(opacity=' + level * 100 + ')'});
 			else if(this.node.filters.length) {
-				var alpha = this.css('filter').match(/opacity\s*?=\s*?['"]?\s*?(\d+)/i);
+				var alpha = this.css('filter').match(/opacity\s*=\s*['"]?\s*(\d+)/i);
 				return alpha ? alpha[1] / 100 : 1;
 			}
 			else return 1;
 		} : function(level) {
-			return level != undefined ? this.css({opacity: level}) : this.css('opacity');
+			return level !== undefined ? this.css({opacity: level}) : this.css('opacity');
 		};
 	}(),
 	enabled: function(bool) {
@@ -478,12 +388,23 @@ core.prototype = {
 		return this.node.outerHTML || new XMLSerializer().serializeToString(this.node);
 	}
 };
+core.forEach('resize,scroll,blur,focus,error,load,unload,click,dblclick,mousedown,mouseup,mousemove,mouseover,mouseout,keydown,keypress,keyup,change,select,submit,reset'.split(','), function(listener) {
+	return function(type) {
+		core.prototype[type] = function(arg) {
+			return arg ? this.bind(type, arg.call ? arg : listener(arg, Array.prototype.slice.call(arguments, 1))) : this.node[type]();
+		};
+	};
+}(function(method, args) {
+	return function(obj) {
+		(obj = $(this))[method][args ? 'apply' : 'call'](obj, args);
+	};
+}));
 core.list.prototype = {
 	item: function(i) {
 		return new core(this.items[i]);
 	},
-	last: function() {
-		return new core(this.items[this.items.length]);
+	last: function(length) {
+		return (length = this.items.length) ? new core(this.items[this.items.length - 1]) : null;
 	},
 	filter: function(filter) {
 		if(arguments[0].call) return new core.list(this.items, filter);
@@ -512,29 +433,32 @@ core.list.prototype = {
 	}
 };
 core.timer.prototype = {
-	start: function() {
-		if (!this.enabled) {
-			var timer = this;
-			this.interval = setInterval(function(){
-				timer.fn.apply(timer, timer.arg || []);
-			}, this.time);
-			this.enabled = true;
+	start: function(timer) {
+		if(!this.enabled) {
+			(timer = this).enabled = true;
+			(function() {
+				timer.fn.call(timer.context, timer);
+				if(timer.enabled) setTimeout(arguments.callee, timer.time);
+			})();
 		}
 		return this;
 	},
 	stop: function() {
-		clearInterval(this.interval);
 		this.enabled = false;
 		return this;
 	},
-	repeat: function(amount, fn, arg) {
-		if(fn) core.extend(this, {callback: {fn: fn, arg: arg}});
-		var timer = this;
-		if(amount) setTimeout(function() {
-			timer.fn.apply(timer, timer.arg || []);
-			timer.repeat(--amount);
-			if(!amount && timer.callback) timer.callback.fn.apply(timer, timer.callback.arg || []);
-		}, this.time);
+	repeat: function(amount, callback, context, timer) {
+		if(!this.enabled) {
+			(timer = this).enabled = true;
+			(function() {
+				timer.fn.call(timer.context, timer);
+				if(timer.enabled && --amount) setTimeout(arguments.callee, timer.time);
+				else {
+					timer.enabled = false;
+					if(callback) callback.call(context, timer);
+				}
+			})();
+		}
 		return this;
 	}
 };
@@ -576,7 +500,7 @@ core.event.prototype = {
 			return function() {
 				return {x: this.object.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc.clientLeft || 0), y: this.object.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc.clientTop || 0)};
 			};
-		}(_.doc.documentElement, _.doc.body) : function() {
+		}(doc.documentElement, doc.body) : function() {
 			return {x: this.object.pageX, y: this.object.pageY};
 		}
 	}(),
@@ -605,9 +529,118 @@ core.extend(core.trim, {
 		return this.both(this.spaces(str));
 	}
 });
-core.ready = _.ready;
-_.ready.exec = _.ready;
-_.ready.check = function() {
-	return _.isReady;
+/**
+ * AJAX module for “js-core”, version 0.2.5
+ * warning: do not use timeout for more then 2 XHR at one time!
+ */
+core.ajax = function() {
+	if(this.ajax) return new this.ajax();
+	this.xhr = window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
 };
-})(/*@cc_on ScriptEngineMinorVersion() @*/);
+core.ajax.type = {
+	html: 'text/html',
+	text: 'text/plain',
+	xml: 'application/xml, text/xml',
+	json: 'application/json, text/javascript',
+	script: 'text/javascript, application/javascript',
+	'default': 'application/x-www-form-urlencoded'
+};
+core.ajax.accept = '*\/*';
+core.ajax.prototype.open = function(params) {
+	core.extend(this, {
+		method: params.method || 'GET',
+		url: params.url || location.href,
+		async: params.async !== false,
+		user: params.user || null,
+		password: params.password || null,
+		params: params.params || null,
+		processData: params.processData === true,
+		timeout: params.timeout || 0,
+		contentType: core.ajax.type[params.contentType] || core.ajax.type['default'],
+		dataType: core.ajax.type[params.dataType] ? core.ajax.type[params.dataType] + ', *\/*' : core.ajax.accept,
+		requestHeaders: params.requestHeaders || null,
+		success: params.success,
+		error: params.error
+	});
+	if(this.params) {
+		var params = [], process = this.process;
+		core.forEach(this.params, function(key, value) {
+			params.push([key, '=', process ? encodeURIComponent(value) : value].join(''));
+		});
+		this.params = params.join('&');
+	}
+	try {
+		this.xhr.open(this.method, this.method == 'GET' && this.params ? this.url + '?' + this.params : this.url, this.async, this.user, this.password);
+		this.xhr.setRequestHeader('Accept', this.dataType);
+		this.xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+		this.xhr.setRequestHeader('Content-Type', this.contentType);
+		var ajax = this;
+		if(this.requestHeaders) core.forEach(this.requestHeaders, function(key, value) {
+			ajax.xhr.setRequestHeader(key, value);
+		});
+		this.xhr.onreadystatechange = function() {
+			if(ajax.xhr.readyState == 4) {
+				if(ajax.xhr.status == 200 || ajax.xhr.status == 0 && ajax.success) ajax.success(ajax.xhr.responseText);
+				else if(ajax.error && !ajax.aborted) ajax.error(ajax.xhr.statusText);
+			}
+		};
+		this.xhr.send(this.params);;
+		if(this.async && this.timeout) setTimeout(function() {
+			if(ajax.xhr.readyState != 4) {
+				ajax.aborted = true;
+				ajax.xhr.abort();
+				if(ajax.error) ajax.error('Time is out');
+			}
+		}, this.timeout);
+	}
+	catch(error) {
+		if(this.error) this.error(error);
+	}
+};
+core.get = function(params, success, error) {
+	new core.ajax().open(core.extend(params, {success: success, error: error}));
+	return this;
+};
+core.post = function(params, success, error) {
+	new core.ajax().open(core.extend(params, {method: 'POST', success: success, error: error}));
+	return this;
+};
+core.getJSON = function(params, callback, error) {
+	new core.ajax().open(core.extend(params, {dataType: 'json', success: function(response) {
+		try {
+			callback(eval('(' + response + ')'));
+		}
+		catch(error) {
+			if(this.error) this.error(error);
+		}
+	}, error: error}));
+	return this;
+};
+core.prototype.load = function(params, success, error) {
+	var _this = this;
+	new core.ajax().open(core.extend(params, {success: function(response) {
+		_this.html(response);
+		if(success) success.call(_this.node, response, this.xhr);
+	}, error: function(response) {
+		if(error) error.call(_this.node, response, this.xhr);
+	}}));
+	return this;
+};
+win.core = win.$ ? core : (win.$ = core);
+})(window, document, function(arg) {
+	if(this.core) return new this.core(arg);
+	this.node = core.id(arg);
+} /*@cc_on , ScriptEngineMinorVersion() @*/);
+
+/**
+ * Integration
+ */
+var $$ = core.query = function(selector, root, noCache) {
+	return new core.list(_(selector, root, noCache), false);
+};
+core.prototype.query = function(selector, noCache) {
+	return new core.list(_(selector, this.node, noCache), false);
+};
+core.browser = _.browser;
+core.ready = _.ready;
+core.load = _.load;
