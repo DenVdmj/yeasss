@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
-* $Rev: 17 $
+* $Date: 2009-01-27 15:34:28 +3000 (Tue, 26 Jan 2009) $
+* $Rev: 18 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -292,7 +292,7 @@ that must be nulled. Need this only to generic case
 		}
 	}
 /* return and cache results */
-	return _.c[selector] = sets;
+	return noCache ? sets : _.c[selector] = sets;
 };
 /* cache for selected nodes, no leaks in IE detected */
 _.c = [];
