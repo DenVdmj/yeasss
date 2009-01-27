@@ -48,5 +48,51 @@
 <li><code>:not(...)</code> negation pseudo selectors</li>
 <li>multiple selectors <code>[class=class1][class=class2]</code></li>
 </ul>
+
+<h3>Modules API</h3>
+
+<p>YASS is very flexible for any kind of extensions. For example you can dynamically load full Prototype of full jQuery after load of YASS core. For this purpose you should write:</p>
+
+<p><code>&lt;script src="yass.js" type="text/javascript" class="yass-module-jquery"&gt;&lt;/script&gt;</code></p>
+
+<p>With this piece of code you:</p>
+
+<ol>
+<li>Load YASS as external JavaScript file</li>
+<li>Load file <code>yass.jquery.js</code> that is located near initial HTML file - on DOM ready event</li>
+</ol>
+
+<p>You can also load any other file as a YASS module. Just use:</p>
+
+<p><code>&lt;script src="yass.js" type="text/javascript" class="yass-module-http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js"&gt;&lt;/script&gt;</code></p>
+
+<p>On the end of each module you can:</p>
+
+<ul>
+<li><p>Fire any action right after all dependencies for this module will be resolved. Dependencies can be written in any DOM node class:</p>
+<p><code>&lt;div class="yass-module-base-jquery"&gt;&lt;/div&gt;</code></p>
+<p>So <code>jquery</code> depends on <code>base</code> and final <code>load</code> won't be fired untill both of files are loaded.</p>
+<p>For this purpose you can setup in each module <code>init</code> event:</p>
+<p><code>_.modules[modules_name]['init'] = function(){...}</code></p>
+<p>For the <code>base</code> module it will be (in the end of the file <code>yass.base.js</code>):</p>
+<p><code>_.modules['base']['init'] = function(){...}</code></p></li>
+<li><p>Form tree of dependecies dynamically. For this purpose you should write <code>_.init(module_dependency + '-' + module_name)</code> at the end of loading file. YASS will fire <code>load</code> only after <code>module_dependency</code> is loaded.</p></li>
+<li><p>Execute any function on script load itself (w/o dependencies tree). Just write in <code>title</code> of any DOM node:</p>
+<p><code>&lt;div id="jquery" class="yass-module-jquery" title="$('jquery').html('jQuery is loaded via YASS')"&gt;&lt;/div&gt;</code></p>
+<p>So right after the script <code>yass.jquery.js</code> will be loaded and initialized <code>title</code> will be executed.</p></li>
+<li><p>Also you can touch module-specific namespace located in <code>_.modules[module_name]</code>. There are some pre-defined objects / variables:</p>
+<ul>
+<li><code>_.modules[module_name].status</code> indicates current status of this module (0 &mdash; not loaded yet, 1 &mdash; is being loaded, 2 &mdash; is loaded, 3 &mdash; resolving dependencies, -1 &mdash; can't be loaded).</li>
+<li><code>_.modules[module_name].yass</code> &mdash; hash of modules that depend on current.</li>
+<li><code>_.modules[module_name].deps</code> &mdash; array of modules that current one depends on.</li>
+<li><code>_.modules[module_name].notloaded</code> &mdash; number of not loaded dependencies.</li>
+<li><code>_.modules[module_name].deps.yass</code> &mdash; hash of modules that current one depends on.</li>
+</ul>
+<p>Please create all module-dependent variables inside this namespace.</p>
+</li>
+</ul>
+
+<p>More examples can we studied from <a href="http://webo.in/tests/yass-tree-load/">online modules load demo</a>.</p>
+
 </div>
 <!--#include virtual="/includes/bottom.shtml" -->
