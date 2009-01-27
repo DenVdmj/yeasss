@@ -9,8 +9,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 22:14:01 +3000 (Tue, 27 Jan 2009) $
-* $Rev: 2 $
+* $Date: 2009-01-27 22:25:02 +3000 (Tue, 27 Jan 2009) $
+* $Rev: 3 $
 */
 (function(win, doc, core, ie, undefined) {
 core.forEach = function(obj, func, context) {
@@ -404,7 +404,7 @@ core.list.prototype = {
 		return new core(this.items[i]);
 	},
 	last: function(length) {
-		return (length = this.items.length) ? new core(this.items[this.items.length - 1]) : null;
+		return new core(this.items[this.items.length - 1] || false);
 	},
 	filter: function(filter) {
 		if(arguments[0].call) return new core.list(this.items, filter);
