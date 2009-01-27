@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 11:04:26 +3000 (Mon, 26 Jan 2009) $
-* $Rev: 16 $
+* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
+* $Rev: 17 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -25,6 +25,8 @@ Return not cached result if root specified, thx to Skiv
 	if (_.c[selector] && !noCache && !root) {
 		return  _.c[selector];
 	}
+/* re-define noCache*/
+	noCache = noCache || !!root;
 /* clean root with document */
 	root = root || _.doc;
 /* sets of nodes, to handle comma-separated selectors */
@@ -53,7 +55,7 @@ Get all matching elements with this id
 				break;
 			case '.':
 				var klass = selector.slice(1);
-				if (_.doc.getElementsByClassName) {
+				if (_.k) {
 					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
 					klass = new RegExp('(^| +)' + klass + '($| +)');
@@ -139,7 +141,7 @@ Split by RegExp, thx to tenshi.
 try to avoid work - check cache. Will glitch a few
 on concatinating different results with one tag.
 */
-				if (!(nodes = _.c[group])) {
+				if (!(nodes = _.c[group]) || noCache) {
 /*
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
@@ -468,7 +470,9 @@ options in Safari work properly.
     }
 };
 /* cached check for querySelectorAll */
-_.q = !!_.doc.querySelectorAll
+_.q = !!_.doc.querySelectorAll;
+/* cached check for getElementsByClassName */
+_.k = !!_.doc.getElementsByClassName;
 /*
 clean cache on DOM changes. Code copied from Sizzle
 (thx, John), rev. 2008-12-05, line 13. Don't know why

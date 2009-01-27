@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 11:04:26 +3000 (Mon, 26 Jan 2009) $
-* $Rev: 362 $
+* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
+* $Rev: 363 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -26,6 +26,8 @@ Return not cached result if root specified, thx to Skiv
 	if (_.c[selector] && !noCache && !root) {
 		return  _.c[selector];
 	}
+/* re-define noCache*/
+	noCache = noCache || !!root;
 /* clean root with document */
 	root = root || _.doc;
 /* sets of nodes, to handle comma-separated selectors */
@@ -47,7 +49,7 @@ workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== idx) {
+				if (_.browser.ie && sets.id !== idx) {
 					sets = _.doc.all[idx];
 				}
 				sets = sets ? [sets] : [];
@@ -140,7 +142,7 @@ Split by RegExp, thx to tenshi.
 try to avoid work - check cache. Will glitch a few
 on concatinating different results with one tag.
 */
-				if (!(nodes = _.c[group])) {
+				if (!(nodes = _.c[group]) || noCache) {
 /*
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
@@ -517,7 +519,9 @@ _.bind = function (element, event, fn) {
 /* browser sniffing */
 _.ua = navigator.userAgent.toLowerCase();
 /* cached check for querySelectorAll */
-_.q = !!_.doc.querySelectorAll
+_.q = !!_.doc.querySelectorAll;
+/* cached check for getElementsByClassName */
+_.k = !!_.doc.getElementsByClassName;
 /* code for DOM ready and browsers detection taken from jQuery */
 _.browser = {
 	safari: _.ua.indexOf('webkit') != -1,

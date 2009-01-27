@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-26 11:04:26 +3000 (Mon, 26 Jan 2009) $
-* $Rev: 13 $
+* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
+* $Rev: 14 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -46,7 +46,7 @@ Get all matching elements with this id
 				return sets ? [sets] : [];
 			case '.':
 				var klass = selector.slice(1);
-				if (_.doc.getElementsByClassName) {
+				if (_.k) {
 					return (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
 					klass = new RegExp('(^| +)' + klass + '($| +)');
@@ -437,7 +437,9 @@ options in Safari work properly.
     }
 };
 /* cached check for querySelectorAll */
-_.q = !!_.doc.querySelectorAll
+_.q = !!_.doc.querySelectorAll;
+/* cached check for getElementsByClassName */
+_.k = !!_.doc.getElementsByClassName;
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
