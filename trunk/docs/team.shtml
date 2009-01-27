@@ -8,6 +8,8 @@
 <dd>Plugins development. Standards-compaint tests. Intergration with other libraries.</dd>
 <dt><a href="http://jsx.ru/indexeng.html">Andrew Sumin</a></dt>
 <dd>JSX library ideas: modules loading and general architechture, chaining events implementation.</dd>
+<dt><a href="http://js-core.ru/">Dmitry Korobkin</a> aka Octane</dt>
+<dd>Mutual integration with js-core. Full JavaScript framework development - YASS + js-core.</dd>
 </dl>
 </div>
 <!--#include virtual="/includes/bottom.shtml" -->
