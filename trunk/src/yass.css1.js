@@ -9,8 +9,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 12 $
+* $Date: 2009-02-02 15:53:29 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 13 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -114,7 +114,7 @@ tag, id, class, attribute, value, modificator, index.
 */
 					tag = single[1] || '*';
 					id = single[2];
-					klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
+					klass = single[3] ? ' ' + single[3] + ' ' : '';
 /* new nodes array */
 					newNodes = [];
 /*
@@ -142,7 +142,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-							if ((!id || item.id === id) && (!klass || klass.test(item.className)) && !item.yeasss) {
+							if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && !item.yeasss) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
