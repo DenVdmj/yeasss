@@ -9,8 +9,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 18:29:29 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 15 $
+* $Date: 2009-02-02 18:58:30 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 17 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -118,19 +118,52 @@ tag, id, class
 */
 					stack[h++] = [single[1] ? single[1].toLowerCase() : '', single[2], single[3] ? ' ' + single[3] + ' ' : ''];
 				}
-				i = h;
-				item = stack[i - 1];
+				item = stack[h - 1];
 				tag = item[0];
 				id = item[1];
 				klass = item[2];
-/* new nodes array */
-				nodes = id ? [_.doc.getElementById(id)] : _.k && !tag && klass ? _.doc.getElementsByClassName(klass) : _.doc.getElementsByTagName(tag || '*');
+/* form new nodes array */
+				if (id) {
+/* by id */
+					nodes = [_.doc.getElementById(id)];
+					if (_.doc.all && nodes[0].id !== id) {
+						nodes = _.doc.all[idx];
+					}
 /* pre-check of selected nodes */
-				while (child = nodes[J++]) {
-					if ((!tag || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className +' ').indexOf(klass) != -1)) {
-						newNodes[idx++] = child;
+					while (child = nodes[J++]) {
+						if ((!tag || child.nodeName.toLowerCase() === tag) && (!klass || (' ' + child.className +' ').indexOf(klass) != -1)) {
+							if (i == 1) {
+								child.yeasss = 1;
+							}
+							newNodes[idx++] = child;
+						}
+					}
+				} else {
+/* by class */
+					if (_.k && klass) {
+						nodes = _.doc.getElementsByClassName(klass) 
+						while (child = nodes[J++]) {
+							if ((!tag || child.nodeName.toLowerCase() === tag) && (!id || child.id === id)) {
+								if (i == 1) {
+									child.yeasss = 1;
+								}
+								newNodes[idx++] = child;
+							}
+						}
+					} else {
+/* or by tag */
+						nodes = _.doc.getElementsByTagName(tag || '*');
+						while (child = nodes[J++]) {
+							if ((!id || child.id === id) && (!klass || (' ' + child.className +' ').indexOf(klass) != -1)) {
+								if (i == 1) {
+									child.yeasss = 1;
+								}
+								newNodes[idx++] = child;
+							}
+						}
 					}
 				}
+				i = h;
 				if (i--) {
 					nodes = newNodes;
 					idx = 0;
