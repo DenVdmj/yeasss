@@ -1,14 +1,14 @@
 (function(){
 /*
-* YASS 0.3.4 - The fastest CSS selectors JavaScript library
+* YASS 0.3.8 - The fastest CSS selectors JavaScript library
 * Experimental branch of YASS - no cache
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
-* $Rev: 14 $
+* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 15 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -49,12 +49,13 @@ Get all matching elements with this id
 				if (_.k) {
 					return (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
-					klass = new RegExp('(^| +)' + klass + '($| +)');
+/* no RegExp, thx to DenVdmj */
+					klass = ' ' + klass + ' ';
 					var nodes = root.getElementsByTagName('*'),
 						i = 0,
 						node;
 					while (node = nodes[i++]) {
-						if (klass.test(node.className)) {
+						if ((' ' + node.className + ' ').indexOf(klass) != -1) {
 							sets[idx++] = node;
 						}
 
@@ -172,11 +173,11 @@ find all TAGs or just return all possible neibours.
 Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
-							switch (ancestor) {
-								case ' ':
-									childs = child.getElementsByTagName(tag);
-									h = 0;
-									while (item = childs[h++]) {
+								switch (ancestor) {
+									case ' ':
+										childs = child.getElementsByTagName(tag);
+										h = 0;
+										while (item = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
@@ -185,56 +186,55 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-										if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
 */
-											if (last) {
-												item.yeasss = 1;
+												if (last) {
+													item.yeasss = 1;
+												}
+												newNodes[idx++] = item;
 											}
-											newNodes[idx++] = item;
 										}
-									}
-									break;
-/* from w3.org: "an F element preceded by an E element" */
-								case '~':
-									tag = tag.toLowerCase();
+										break;
+/* W3C: "an F element preceded by an E element" */
+									case '~':
+										tag = tag.toLowerCase();
 /* don't touch already selected elements */
-									while ((child = child.nextSibling) && !child.yeasss) {
-										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+										while ((child = child.nextSibling) && !child.yeasss) {
+											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+												if (last) {
+													child.yeasss = 1;
+												}
+												newNodes[idx++] = child;
+											}
+										}
+										break;
+/* W3C: "an F element immediately preceded by an E element" */
+									case '+':
+										while ((child = child.nextSibling) && child.nodeType != 1) {}
+										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 											if (last) {
 												child.yeasss = 1;
 											}
 											newNodes[idx++] = child;
 										}
-									}
-									break;
-/* from w3.org: "an F element immediately preceded by an E element" */
-								case '+':
-									while ((child = child.nextSibling) && child.nodeType != 1) {}
-									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
-										if (last) {
-											child.yeasss = 1;
-										}
-										newNodes[idx++] = child;
-									}
-									break;
-/* from w3.org: "an F element child of an E element" */
-								case '>':
-									var childs = child.getElementsByTagName(tag),
-										i = 0,
-										item;
-									while (item = childs[i++]) {
-										if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
-											if (last) {
-												item.yeasss = 1;
+										break;
+/* W3C: "an F element child of an E element" */
+									case '>':
+										childs = child.getElementsByTagName(tag);
+										i = 0;
+										while (item = childs[i++]) {
+											if (item.parentNode === child && (!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+												if (last) {
+													item.yeasss = 1;
+												}
+												newNodes[idx++] = item;
 											}
-											newNodes[idx++] = item;
 										}
-									}
-									break;
-							}
+										break;
+								}
 						}
 /* put selected nodes in local nodes' set */
 						nodes = newNodes;

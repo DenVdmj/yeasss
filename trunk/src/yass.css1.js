@@ -2,15 +2,15 @@
 /*
 * YASS1 - The fastest CSS1 selectors JavaScript library
 * Experimental branch of YASS - just CSS1 family.
-* Faster only by 20-30% than YASS 0.3.4
+* Faster only by 20-30% than YASS 0.3.8
 * Slower than native methods by 100-300%
 *
 * Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 15:30:27 +3000 (Tue, 26 Jan 2009) $
-* $Rev: 11 $
+* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 12 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -48,12 +48,13 @@ Get all matching elements with this id
 				if (_.k) {
 					return (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
-					klass = new RegExp('(^| +)' + klass + '($| +)');
+/* no RegExp, thx to DenVdmj */
+					klass = ' ' + klass + ' ';
 					var nodes = root.getElementsByTagName('*'),
 						i = 0,
 						node;
 					while (node = nodes[i++]) {
-						if (klass.test(node.className)) {
+						if ((' ' + node.className + ' ').indexOf(klass) != -1) {
 							sets[idx++] = node;
 						}
 

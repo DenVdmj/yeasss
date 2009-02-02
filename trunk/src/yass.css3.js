@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 15:34:28 +3000 (Tue, 26 Jan 2009) $
-* $Rev: 18 $
+* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 19 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -58,12 +58,13 @@ Get all matching elements with this id
 				if (_.k) {
 					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
-					klass = new RegExp('(^| +)' + klass + '($| +)');
+/* no RegExp, thx to DenVdmj */
+					klass = ' ' + klass + ' ';
 					var nodes = root.getElementsByTagName('*'),
 						i = 0,
 						node;
 					while (node = nodes[i++]) {
-						if (klass.test(node.className)) {
+						if ((' ' + node.className + ' ').indexOf(klass) != -1) {
 							sets[idx++] = node;
 						}
 
@@ -205,7 +206,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-											if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -217,12 +218,12 @@ Then mark selected element with expando
 											}
 										}
 										break;
-/* from w3.org: "an F element preceded by an E element" */
+/* W3C: "an F element preceded by an E element" */
 									case '~':
 										tag = tag.toLowerCase();
 /* don't touch already selected elements */
 										while ((child = child.nextSibling) && !child.yeasss) {
-											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 												if (last) {
 													child.yeasss = 1;
 												}
@@ -230,22 +231,22 @@ Then mark selected element with expando
 											}
 										}
 										break;
-/* from w3.org: "an F element immediately preceded by an E element" */
+/* W3C: "an F element immediately preceded by an E element" */
 									case '+':
 										while ((child = child.nextSibling) && child.nodeType != 1) {}
-										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 											if (last) {
 												child.yeasss = 1;
 											}
 											newNodes[idx++] = child;
 										}
 										break;
-/* from w3.org: "an F element child of an E element" */
+/* W3C: "an F element child of an E element" */
 									case '>':
 										childs = child.getElementsByTagName(tag);
 										i = 0;
 										while (item = childs[i++]) {
-											if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if (item.parentNode === child && (!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 												if (last) {
 													item.yeasss = 1;
 												}
