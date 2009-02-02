@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-01-27 15:34:28 +3000 (Tue, 26 Jan 2009) $
-* $Rev: 364 $
+* $Date: 2009-02-02 10:18:29 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 367 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -56,15 +56,16 @@ Get all matching elements with this id
 				break;
 			case '.':
 				var klass = selector.slice(1);
-				if (_.doc.getElementsByClassName) {
+				if (_.k) {
 					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
-					klass = new RegExp('(^| +)' + klass + '($| +)');
+/* no RegExp, thx to DenVdmj */
+					klass = ' ' + klass + ' ';
 					var nodes = root.getElementsByTagName('*'),
 						i = 0,
 						node;
 					while (node = nodes[i++]) {
-						if (klass.test(node.className)) {
+						if ((' ' + node.className + ' ').indexOf(klass) != -1) {
 							sets[idx++] = node;
 						}
 
@@ -168,7 +169,7 @@ tag, id, class, attribute, value, modificator, index.
 */
 							tag = single[1] || '*';
 							id = single[2];
-							klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
+							klass = single[3] ? ' ' + single[3] + ' ' : '';
 							attr = single[4];
 							eql = single[5] || '';
 							mod = single[7];
@@ -206,7 +207,7 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-											if ((!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
@@ -223,7 +224,7 @@ Then mark selected element with expando
 										tag = tag.toLowerCase();
 /* don't touch already selected elements */
 										while ((child = child.nextSibling) && !child.yeasss) {
-											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 												if (last) {
 													child.yeasss = 1;
 												}
@@ -234,7 +235,7 @@ Then mark selected element with expando
 /* W3C: "an F element immediately preceded by an E element" */
 									case '+':
 										while ((child = child.nextSibling) && child.nodeType != 1) {}
-										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 											if (last) {
 												child.yeasss = 1;
 											}
@@ -246,7 +247,7 @@ Then mark selected element with expando
 										childs = child.getElementsByTagName(tag);
 										i = 0;
 										while (item = childs[i++]) {
-											if (item.parentNode === child && (!id || item.id === id) && (!klass || klass.test(item.className)) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if (item.parentNode === child && (!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 												if (last) {
 													item.yeasss = 1;
 												}
@@ -591,7 +592,8 @@ if (_.browser.safari) {
 _.bind(_.win, 'load', _.ready);
 /*
 hash of YASS modules: status and init. Statuses:
--1 (can't load)
+-2 (race condition),
+-1 (can't load),
 0 (starting),
 1 (loading),
 2 (loaded),
@@ -619,13 +621,15 @@ _.load = function (aliases, text) {
 				}
 /* module is waiting for initialization */
 			case 3:
+/* module is in race condition */
+			case -2:
 				break;
 /* module hasn't been loaded yet */
 			default:
 /* set module's status to loading. Threads in IE are amazing */
 				_.modules[alias].status = 1;
 				var script = _.doc.createElement('script');
-				script.src = alias.indexOf('.js') + alias.indexOf('/') != -2 ? alias : 'yass.' + alias + '.js';
+				script.src = alias.indexOf('.js') + alias.indexOf('/') != -2 ? alias : _.base + 'yass.' + alias + '.js';
 				script.type = 'text/javascript';
 /* to handle script.onload event */
 				script.text = text || '';
@@ -658,6 +662,8 @@ we can define several modules for 1 component:
 yass-module-item1-item2-item3
 */
 	aliases = aliases.split("-");
+/* define base to load modules */
+	_.base = _.base || _('script[src*=yass.]')[0].src.replace(/yass[^\/]*\.js$/,"");
 	while (alias = aliases[idx++]) {
 /* create module in YASS */
 		if (!_.modules[alias]) {
@@ -684,7 +690,7 @@ also track cases when module is already loaded
 			_.modules[alias].notloaded++;
 		}
 /* prevent race conditions */
-		if (typeof _.modules[alias].status === 'undefined') {
+		if (!_.modules[alias].status && !(_.modules[alias].status -= 2)) {
 			_.modules[alias].status = 0;
 /* 11999 = 1000 * 11 reload attempts + 100 checks * 10 reload attempts - 1 */
 			loader(alias, text, 11999, aliases);
