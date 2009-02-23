@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 19 $
+* $Date: 2009-02-23 12:43:29 +3000 (Mon, 23 Feb 2009) $
+* $Rev: 20 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -25,7 +25,7 @@ Return not cached result if root specified, thx to Skiv
 	if (_.c[selector] && !noCache && !root) {
 		return  _.c[selector];
 	}
-/* re-define noCache*/
+/* re-define noCache */
 	noCache = noCache || !!root;
 /* clean root with document */
 	root = root || _.doc;
@@ -48,7 +48,7 @@ workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== idx) {
+				if (_.browser.ie && sets.id !== idx) {
 					sets = _.doc.all[idx];
 				}
 				sets = sets ? [sets] : [];
@@ -110,7 +110,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.q && selector.indexOf('!=') == -1) {
+		if (_.browser.q && selector.indexOf('!=') == -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -161,14 +161,14 @@ simple exec. Thx to GreLI for 'greed' RegExp
 					while (single = singles[i++]) {
 /* simple comparison is faster than hash */
 						if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-							single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+							single = single.match(/([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
 */
 							tag = single[1] || '*';
 							id = single[2];
-							klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
+							klass = single[3] ? ' ' + single[3] + ' ' : '';
 							attr = single[4];
 							eql = single[5] || '';
 							mod = single[7];
@@ -303,12 +303,12 @@ _.doc = document;
 _.win = window;
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
-/* from w3.org "an E element with a "attr" attribute" */
+/* W3C "an E element with a "attr" attribute" */
 	'': function (child, attr) {
 		return !!child.getAttribute(attr);
 	},
 /*
-from w3.org "an E element whose "attr" attribute value is
+W3C "an E element whose "attr" attribute value is
 exactly equal to "value"
 */
 	'=': function (child, attr, value) {
@@ -330,21 +330,21 @@ begins exactly with the string "value"
 		return (attr = child.getAttribute(attr) + '') && !attr.indexOf(value);
 	},
 /*
-from w3.org "an E element whose "attr" attribute value
+W3C "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
 		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) == attr.length - value.length;
 	},
 /*
-from w3.org "an E element whose "attr" attribute value
+W3C "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
 		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) != -1;
 	},
 /*
-from w3.org "an E element whose "attr" attribute has
+W3C "an E element whose "attr" attribute has
 a hyphen-separated list of values beginning (from the
 left) with "value"
 */
@@ -470,21 +470,33 @@ options in Safari work properly.
       return !child.selected;
     }
 };
+/* to handle DOM ready event */
+_.isReady = 0;
+/* dual operator for onload functions stack */
+_.ready = function (fn) {
+/* with param works as setter */
+	if (typeof fn === 'function') {
+		if (!_.isReady) {
+			_.ready.list[_.ready.list.length] = fn;
+/* after DOM ready works as executer */
+		} else {
+			fn();
+		}
+/* w/o any param works as executer */
+	} else {
+		if (!_.isReady){
+			_.isReady = 1;
+			var idx = _.ready.list.length;
+			while (idx--) {
+				_.ready.list[idx]();
+			}
+		}
+	}
+};
 /* cached check for querySelectorAll */
 _.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
 _.k = !!_.doc.getElementsByClassName;
-/*
-clean cache on DOM changes. Code copied from Sizzle
-(thx, John), rev. 2008-12-05, line 13. Don't know why
-we should ignore this for Safari, querySelectorAll removed.
-*/
-if (_.doc.addEventListener) {
-  function invalidate(){ _.c = {}; }
-  _.doc.addEventListener('DOMAttrModified', invalidate, false);
-  _.doc.addEventListener('DOMNodeInserted', invalidate, false);
-  _.doc.addEventListener('DOMNodeRemoved', invalidate, false);
-}
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
