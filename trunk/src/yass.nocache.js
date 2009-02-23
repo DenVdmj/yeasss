@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 10:13:28 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 15 $
+* $Date: 2009-02-23 12:55:29 +3000 (Mon, 23 Feb 2009) $
+* $Rev: 16 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -17,19 +17,17 @@
  * @param {Boolean} disable cache of not
  */
 var _ = function (selector, root) {
-/*
-Subtree added, second argument, thx to tenshi.
-*/
 /* clean root with document */
 	root = root || _.doc;
+/* sets of nodes, to handle comma-separated selectors */
+	var sets = [];
 /* quick return or generic call, missed ~ in attributes selector */
 	if (/^[\w[:#.][\w\]*^|=!]*$/.test(selector)) {
 /*
 some simple cases - only ID or only CLASS for the very first occurence
 - don't need additional checks. Switch works as a hash.
 */
-		var idx = 0,
-			sets = [];
+		var idx = 0;
 /* the only call -- no cache, thx to GreLI */
 		switch (selector.charAt(0)) {
 			case '#':
@@ -40,7 +38,7 @@ workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== idx) {
+				if (_.browser.ie && sets.id !== idx) {
 					sets = _.doc.all[idx];
 				}
 				return sets ? [sets] : [];
@@ -97,18 +95,20 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.q && selector.indexOf('!=') == -1) {
+		if (_.browser.q && selector.indexOf('!=') == -1) {
 			return root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
 /* number of groups to merge or not result arrays */
-			var groups_length = 0,
-				sets = [],
 /*
 groups of selectors separated by commas.
 Split by RegExp, thx to tenshi.
 */
-				groups = selector.split(/ *, */),
+			var groups = selector.split(/ *, */),
+/* group counter */
+				gl = groups.length - 1,
+/* if we need to concat several groups */
+				concat = !!gl,
 				group,
 				singles,
 				singles_length,
@@ -122,13 +122,13 @@ Split by RegExp, thx to tenshi.
 /* for inner looping */
 				tag, id, klass, attr, eql, mod, ind, newNodes, idx, J, child, last, childs, item, h;
 /* loop in groups, maybe the fastest way */
-			while (group = groups[groups_length++]) {
+			while (group = groups[gl--]) {
 /*
 Split selectors by space - to form single group tag-id-class,
 or to get heredity operator. Replace + in child modificators
 to % to avoid collisions. Additional replace is required for IE.
 Replace ~ in attributes to & to avoid collisions.
-*/
+*/	
 				singles_length = (singles = group.replace(/(\([^)]*)\+/,"$1%").replace(/(\[[^\]]+)~/,"$1&").replace(/(~|>|\+)/," $1 ").split(/ +/)).length;
 				i = 0;
 				ancestor = ' ';
@@ -141,14 +141,14 @@ simple exec. Thx to GreLI for 'greed' RegExp
 				while (single = singles[i++]) {
 /* simple comparison is faster than hash */
 					if (single !== ' ' && single !== '>' && single !== '~' && single !== '+' && nodes) {
-						single = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/.exec(single);
+						single = single.match(/([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/);
 /* 
 Get all required matches from exec:
 tag, id, class, attribute, value, modificator, index.
 */
 						tag = single[1] || '*';
 						id = single[2];
-						klass = single[3] ? new RegExp('(^| +)' + single[3] + '($| +)') : '';
+						klass = single[3] ? ' ' + single[3] + ' ' : '';
 						attr = single[4];
 						eql = single[5] || '';
 						mod = single[7];
@@ -173,11 +173,11 @@ find all TAGs or just return all possible neibours.
 Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
-								switch (ancestor) {
-									case ' ':
-										childs = child.getElementsByTagName(tag);
-										h = 0;
-										while (item = childs[h++]) {
+							switch (ancestor) {
+								case ' ':
+									childs = child.getElementsByTagName(tag);
+									h = 0;
+									while (item = childs[h++]) {
 /*
 check them for ID or Class. Also check for expando 'yeasss'
 to filter non-selected elements. Typeof 'string' not added -
@@ -186,55 +186,55 @@ Also check for given attributes selector.
 Modificator is either not set in the selector, or just has been nulled
 by modificator functions hash.
 */
-											if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+										if ((!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
 /* 
 Need to define expando property to true for the last step.
 Then mark selected element with expando
 */
-												if (last) {
-													item.yeasss = 1;
-												}
-												newNodes[idx++] = item;
+											if (last) {
+												item.yeasss = 1;
 											}
+											newNodes[idx++] = item;
 										}
-										break;
+									}
+									break;
 /* W3C: "an F element preceded by an E element" */
-									case '~':
-										tag = tag.toLowerCase();
+								case '~':
+									tag = tag.toLowerCase();
 /* don't touch already selected elements */
-										while ((child = child.nextSibling) && !child.yeasss) {
-											if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
-												if (last) {
-													child.yeasss = 1;
-												}
-												newNodes[idx++] = child;
-											}
-										}
-										break;
-/* W3C: "an F element immediately preceded by an E element" */
-									case '+':
-										while ((child = child.nextSibling) && child.nodeType != 1) {}
-										if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+									while ((child = child.nextSibling) && !child.yeasss) {
+										if (child.nodeType == 1 && (tag === '*' || child.nodeName.toLowerCase() === tag) && (!id || child.id === id) && (!klass || (' ' + child.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
 											if (last) {
 												child.yeasss = 1;
 											}
 											newNodes[idx++] = child;
 										}
-										break;
-/* W3C: "an F element child of an E element" */
-									case '>':
-										childs = child.getElementsByTagName(tag);
-										i = 0;
-										while (item = childs[i++]) {
-											if (item.parentNode === child && (!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
-												if (last) {
-													item.yeasss = 1;
-												}
-												newNodes[idx++] = item;
-											}
+									}
+									break;
+/* W3C: "an F element immediately preceded by an E element" */
+								case '+':
+									while ((child = child.nextSibling) && child.nodeType != 1) {}
+									if (child && (child.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') && (!id || child.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !child.yeasss && !(_.mods[mod] ? _.mods[mod](child, ind) : mod)) {
+										if (last) {
+											child.yeasss = 1;
 										}
-										break;
-								}
+										newNodes[idx++] = child;
+									}
+									break;
+/* W3C: "an F element child of an E element" */
+								case '>':
+									childs = child.getElementsByTagName(tag);
+									i = 0;
+									while (item = childs[i++]) {
+										if (item.parentNode === child && (!id || item.id === id) && (!klass || (' ' + item.className + ' ').indexOf(klass) != -1) && (!attr || (_.attr[eql] && (_.attr[eql](item, attr, single[6]) || (attr === 'class' && _.attr[eql](item, 'className', single[6]))))) && !item.yeasss && !(_.mods[mod] ? _.mods[mod](item, ind) : mod)) {
+											if (last) {
+												item.yeasss = 1;
+											}
+											newNodes[idx++] = item;
+										}
+									}
+									break;
+							}
 						}
 /* put selected nodes in local nodes' set */
 						nodes = newNodes;
@@ -243,16 +243,25 @@ Then mark selected element with expando
 						ancestor = single;
 					}
 				}
-/* inialize sets with nodes */
-				sets = sets.length ? sets : nodes;
-/* fixing bug on non-existent selector, thx to deerua */
-				if (groups_length > 1) {
+				if (concat) {
+/* if sets isn't an array - create new one */
+					if (!nodes.concat) {
+						newNodes = [];
+						h = 0;
+						while (item = nodes[h]) {
+							newNodes[h++] = item;
+						}
+						nodes = newNodes;
 /* concat is faster than simple looping */
-					sets = sets.concat(nodes);
+					}
+					sets = nodes.concat(sets.length == 1 ? sets[0] : sets);
+				} else {
+/* inialize sets with nodes */
+					sets = nodes;
 				}
 			}
-/* define sets length to clean yeasss */
-			idx = (sets = sets || []).length;
+/* define sets length to clean up expando */
+			idx = sets.length;
 /*
 Need this looping as far as we also have expando 'yeasss'
 that must be nulled. Need this only to generic case
@@ -260,21 +269,25 @@ that must be nulled. Need this only to generic case
 			while (idx--) {
 				sets[idx].yeasss = sets[idx].nodeIndex = sets[idx].nodeIndexLast = null;
 			}
-/* return results */
+/* return and cache results */
 			return sets;
 		}
 	}
 };
+/* cache for selected nodes, no leaks in IE detected */
+_.c = [];
 /* caching global document */
 _.doc = document;
+/* caching global window */
+_.win = window;
 /* function calls for CSS2/3 attributes selectors */
 _.attr = {
-/* from w3.org "an E element with a "attr" attribute" */
+/* W3C "an E element with a "attr" attribute" */
 	'': function (child, attr) {
 		return !!child.getAttribute(attr);
 	},
 /*
-from w3.org "an E element whose "attr" attribute value is
+W3C "an E element whose "attr" attribute value is
 exactly equal to "value"
 */
 	'=': function (child, attr, value) {
@@ -296,21 +309,21 @@ begins exactly with the string "value"
 		return (attr = child.getAttribute(attr) + '') && !attr.indexOf(value);
 	},
 /*
-from w3.org "an E element whose "attr" attribute value
+W3C "an E element whose "attr" attribute value
 ends exactly with the string "value"
 */
 	'$=': function (child, attr, value) {
 		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) == attr.length - value.length;
 	},
 /*
-from w3.org "an E element whose "attr" attribute value
+W3C "an E element whose "attr" attribute value
 contains the substring "value"
 */
 	'*=': function (child, attr, value) {
 		return (attr = child.getAttribute(attr) + '') && attr.indexOf(value) != -1;
 	},
 /*
-from w3.org "an E element whose "attr" attribute has
+W3C "an E element whose "attr" attribute has
 a hyphen-separated list of values beginning (from the
 left) with "value"
 */
@@ -436,10 +449,65 @@ options in Safari work properly.
       return !child.selected;
     }
 };
+/* to handle DOM ready event */
+_.isReady = 0;
+/* dual operator for onload functions stack */
+_.ready = function (fn) {
+/* with param works as setter */
+	if (typeof fn === 'function') {
+		if (!_.isReady) {
+			_.ready.list[_.ready.list.length] = fn;
+/* after DOM ready works as executer */
+		} else {
+			fn();
+		}
+/* w/o any param works as executer */
+	} else {
+		if (!_.isReady){
+			_.isReady = 1;
+			var idx = _.ready.list.length;
+			while (idx--) {
+				_.ready.list[idx]();
+			}
+		}
+	}
+};
+/* to execute functions on DOM ready event */
+_.ready.list = [];
+/* general event adding function */
+_.bind = function (element, event, fn) {
+	if (typeof element === 'string') {
+		var elements = _(element),
+			idx = 0;
+		while (element = elements[idx++]) {
+			_.bind(element, event, fn);
+		}
+	} else {
+		event = 'on' + event;
+		var handler = element[event];
+		if (handler) {
+			element[event] = function(){
+				handler();
+				fn();
+			};
+		} else {
+			element[event] = fn;
+		}
+	}
+}
+/* browser sniffing */
+_.ua = navigator.userAgent.toLowerCase();
 /* cached check for querySelectorAll */
 _.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
 _.k = !!_.doc.getElementsByClassName;
+/* code for DOM ready and browsers detection taken from jQuery */
+_.browser = {
+	safari: _.ua.indexOf('webkit') != -1,
+	opera: _.ua.indexOf('opera') != -1,
+	ie: _.ua.indexOf('msie') != -1 && _.ua.indexOf('opera') == -1,
+	mozilla: _.ua.indexOf('mozilla') != -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') == -2)
+};
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
