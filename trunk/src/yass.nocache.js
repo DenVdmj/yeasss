@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:55:29 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 16 $
+* $Date: 2009-02-23 12:58:30 +3000 (Mon, 23 Feb 2009) $
+* $Rev: 17 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -95,7 +95,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.browser.q && selector.indexOf('!=') == -1) {
+		if (_.q && selector.indexOf('!=') == -1) {
 			return root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -449,52 +449,6 @@ options in Safari work properly.
       return !child.selected;
     }
 };
-/* to handle DOM ready event */
-_.isReady = 0;
-/* dual operator for onload functions stack */
-_.ready = function (fn) {
-/* with param works as setter */
-	if (typeof fn === 'function') {
-		if (!_.isReady) {
-			_.ready.list[_.ready.list.length] = fn;
-/* after DOM ready works as executer */
-		} else {
-			fn();
-		}
-/* w/o any param works as executer */
-	} else {
-		if (!_.isReady){
-			_.isReady = 1;
-			var idx = _.ready.list.length;
-			while (idx--) {
-				_.ready.list[idx]();
-			}
-		}
-	}
-};
-/* to execute functions on DOM ready event */
-_.ready.list = [];
-/* general event adding function */
-_.bind = function (element, event, fn) {
-	if (typeof element === 'string') {
-		var elements = _(element),
-			idx = 0;
-		while (element = elements[idx++]) {
-			_.bind(element, event, fn);
-		}
-	} else {
-		event = 'on' + event;
-		var handler = element[event];
-		if (handler) {
-			element[event] = function(){
-				handler();
-				fn();
-			};
-		} else {
-			element[event] = fn;
-		}
-	}
-}
 /* browser sniffing */
 _.ua = navigator.userAgent.toLowerCase();
 /* cached check for querySelectorAll */

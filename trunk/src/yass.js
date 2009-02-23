@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 10:18:29 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 367 $
+* $Date: 2009-02-23 12:58:30 +3000 (Mon, 02 Feb 2009) $
+* $Rev: 368 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -111,7 +111,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.browser.q && selector.indexOf('!=') == -1) {
+		if (_.q && selector.indexOf('!=') == -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {

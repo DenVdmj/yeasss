@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:46:30 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 21 $
+* $Date: 2009-02-23 12:59:31 +3000 (Mon, 23 Feb 2009) $
+* $Rev: 22 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -110,7 +110,7 @@ Get all matching elements with this id
 all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
-		if (_.browser.q && selector.indexOf('!=') == -1) {
+		if (_.q && selector.indexOf('!=') == -1) {
 			sets = root.querySelectorAll(selector);
 /* generic function for complicated selectors */
 		} else {
@@ -469,29 +469,6 @@ options in Safari work properly.
       child.parentNode.selectedIndex;
       return !child.selected;
     }
-};
-/* to handle DOM ready event */
-_.isReady = 0;
-/* dual operator for onload functions stack */
-_.ready = function (fn) {
-/* with param works as setter */
-	if (typeof fn === 'function') {
-		if (!_.isReady) {
-			_.ready.list[_.ready.list.length] = fn;
-/* after DOM ready works as executer */
-		} else {
-			fn();
-		}
-/* w/o any param works as executer */
-	} else {
-		if (!_.isReady){
-			_.isReady = 1;
-			var idx = _.ready.list.length;
-			while (idx--) {
-				_.ready.list[idx]();
-			}
-		}
-	}
 };
 /* browser sniffing */
 _.ua = navigator.userAgent.toLowerCase();
