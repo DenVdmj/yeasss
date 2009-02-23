@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:43:29 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 20 $
+* $Date: 2009-02-23 12:46:30 +3000 (Mon, 23 Feb 2009) $
+* $Rev: 21 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -493,10 +493,19 @@ _.ready = function (fn) {
 		}
 	}
 };
+/* browser sniffing */
+_.ua = navigator.userAgent.toLowerCase();
 /* cached check for querySelectorAll */
 _.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
 _.k = !!_.doc.getElementsByClassName;
+/* code for DOM ready and browsers detection taken from jQuery */
+_.browser = {
+	safari: _.ua.indexOf('webkit') != -1,
+	opera: _.ua.indexOf('opera') != -1,
+	ie: _.ua.indexOf('msie') != -1 && _.ua.indexOf('opera') == -1,
+	mozilla: _.ua.indexOf('mozilla') != -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') == -2)
+};
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
