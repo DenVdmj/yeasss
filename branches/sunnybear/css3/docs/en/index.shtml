@@ -1,0 +1,98 @@
+<!--#set var="TITLE" value="Documentation :: YASS" --><!--#set var="LANG" value="" --><!--#include virtual="/includes/top.shtml" -->
+<div class="documentation">
+<h2>Documentation</h2>
+<p>YASS is a lightweight CSS selectors library that supports some of the common combinations of <a href="http://www.w3.org/TR/2005/WD-css3-selectors-20051215/" rel="nofollow">CSS3 specification</a></p>
+
+<h3><code>_</code> or <code>yass</code> function params</h3>
+
+<p>Main selectors function receives 3 params: CSS selector itself, selection root (<code>document</code> by default) and <code>noCache</code> to clean up cache for given selector (the cache will be automatically dropped for modern browsers, but in IE you should set this parameter to select new set of nodes after changes in HTML).</p>
+
+<p>More examples are listed in <a href="/tutorials/">tutorials</a> section.</p>
+
+<h3>Supported Selectors:</h3>
+
+<ul>
+<li>class selectors (e.g., <code>.example</code>),</li>
+<li>node type selectors like <code>span</code> or <code>div</code>,</li>
+<li>descendant selectors (i.e. <code>div p a</code>),</li>
+<li><code>&gt;</code> child element selectors,</li>
+<li><code>~</code>, the immediately preceeded-by sibling selector,</li>
+<li><code>+</code>, the preceeded-by sibling selector</li>
+<li><code>#id</code> style ID selectors,</li>
+<li><code>*</code> universal selector,</li>
+<li>attribute queries:<ul>
+<li><code>[type=checkbox]</code> attribute value exact match,</li>
+<li><code>[title]</code> attribute presence selector,</li>
+<li><code>[rel~=nofollow]</code> attribute value list item match,</li>
+<li><code>[class^=block]</code> attribute start match,</li>
+<li><code>[class$=hidden]</code> attribute end match,</li>
+<li><code>[alt*=image]</code> attribute substring match,</li>
+<li><code>[alt!=image]</code> attribute value list item negative match,</li>
+</ul></li>
+<li><code>:first-child</code>, <code>:last-child</code> positional selectors,</li>
+<li><code>:empty</code> content empty selector,</li>
+<li><code>:root</code> selector for <code>HTML</code> element,</li>
+<li><code>:checked</code> pseudo selector for checked checkboxes or radio buttons,</li>
+<li><code>:nth-child(3)</code> style positional calculations,</li>
+<li><code>:nth-child(even)</code>, <code>:nth-child(odd)</code>, <code>:nth-child(2n+1)</code> positional selectors,</li>
+<li><code>:lang</code> pseudo selector.</li>
+</ul>
+
+<p>Any legal combination of these selectors will work with _(), including compound selectors ("," delimited). Returned value is either a DOM element or an array of such elements. If there is no element for given selector YASS will return <code>null</code>.</p>
+
+<h3>Unsupported Selectors:</h3>
+
+<p>Some of the selectors are not supported yet. Maybe they will be handled by the next versions of YASS.</p>
+
+<ul>
+<li><code>:not(...)</code> negation pseudo selectors</li>
+<li>multiple selectors <code>[class=class1][class=class2]</code></li>
+</ul>
+
+<h3>Modules API</h3>
+
+<p>YASS is very flexible for any kind of extensions. For example you can dynamically load full Prototype of full jQuery after load of YASS core. For this purpose you should write:</p>
+
+<p><code>&lt;script src="yass.js" type="text/javascript" class="yass-module-jquery"&gt;&lt;/script&gt;</code></p>
+
+<p>With this piece of code you:</p>
+
+<ol>
+<li>Load YASS as external JavaScript file</li>
+<li>Load file <code>yass.jquery.js</code> that is located near initial HTML file - on DOM ready event</li>
+</ol>
+
+<p>You can also load any other file as a YASS module. Just use:</p>
+
+<p><code>&lt;script src="yass.js" type="text/javascript" class="yass-module-http://ajax.googleapis.com/ajax/libs/jquery/1.3/jquery.min.js"&gt;&lt;/script&gt;</code></p>
+
+<p>On the end of each module you can:</p>
+
+<ul>
+<li><p>Fire any action right after all dependencies for this module will be resolved. Dependencies can be written in any DOM node class:</p>
+<p><code>&lt;div class="yass-module-base-jquery"&gt;&lt;/div&gt;</code></p>
+<p>So <code>jquery</code> depends on <code>base</code> and final <code>load</code> won't be fired untill both of files are loaded.</p>
+<p>For this purpose you can setup in each module <code>init</code> event:</p>
+<p><code>_.modules[modules_name]['init'] = function(){...}</code></p>
+<p>For the <code>base</code> module it will be (in the end of the file <code>yass.base.js</code>):</p>
+<p><code>_.modules['base']['init'] = function(){...}</code></p></li>
+<li><p>Form tree of dependecies dynamically. For this purpose you should write <code>_.init(module_dependency + '-' + module_name)</code> at the end of loading file. YASS will fire <code>load</code> only after <code>module_dependency</code> is loaded.</p></li>
+<li><p>Execute any function on script load itself (w/o dependencies tree). Just write in <code>title</code> of any DOM node:</p>
+<p><code>&lt;div id="jquery" class="yass-module-jquery" title="$('jquery').html('jQuery is loaded via YASS')"&gt;&lt;/div&gt;</code></p>
+<p>So right after the script <code>yass.jquery.js</code> will be loaded and initialized <code>title</code> will be executed.</p></li>
+<li><p>Also you can touch module-specific namespace located in <code>_.modules[module_name]</code>. There are some pre-defined objects / variables:</p>
+<ul>
+<li><code>_.modules[module_name].status</code> indicates current status of this module (0 &mdash; not loaded yet, 1 &mdash; is being loaded, 2 &mdash; is loaded, 3 &mdash; resolving dependencies, -1 &mdash; can't be loaded).</li>
+<li><code>_.modules[module_name].yass</code> &mdash; hash of modules that depend on current.</li>
+<li><code>_.modules[module_name].deps</code> &mdash; array of modules that current one depends on.</li>
+<li><code>_.modules[module_name].notloaded</code> &mdash; number of not loaded dependencies.</li>
+<li><code>_.modules[module_name].deps.yass</code> &mdash; hash of modules that current one depends on.</li>
+</ul>
+<p>Please create all module-dependent variables inside this namespace.</p>
+</li>
+</ul>
+
+<p>More examples can we studied from <a href="http://webo.in/tests/yass-tree-load/">online modules load demo</a>.</p>
+
+</div>
+<!--#include virtual="/includes/bottom.shtml" -->
