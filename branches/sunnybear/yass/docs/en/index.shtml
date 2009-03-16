@@ -70,13 +70,13 @@
 
 <ul>
 <li><p>Fire any action right after all dependencies for this module will be resolved. Dependencies can be written in any DOM node class:</p>
-<p><code>&lt;div class="yass-module-base-jquery"&gt;&lt;/div&gt;</code></p>
+<p><code>&lt;div class="yass-module-base#jquery"&gt;&lt;/div&gt;</code></p>
 <p>So <code>jquery</code> depends on <code>base</code> and final <code>load</code> won't be fired untill both of files are loaded.</p>
 <p>For this purpose you can setup in each module <code>init</code> event:</p>
 <p><code>_.modules[modules_name]['init'] = function(){...}</code></p>
 <p>For the <code>base</code> module it will be (in the end of the file <code>yass.base.js</code>):</p>
 <p><code>_.modules['base']['init'] = function(){...}</code></p></li>
-<li><p>Form tree of dependecies dynamically. For this purpose you should write <code>_.init(module_dependency + '-' + module_name)</code> at the end of loading file. YASS will fire <code>load</code> only after <code>module_dependency</code> is loaded.</p></li>
+<li><p>Form tree of dependecies dynamically. For this purpose you should write <code>_.init(module_dependency + '#' + module_name)</code> at the end of loading file. YASS will fire <code>load</code> only after <code>module_dependency</code> is loaded.</p></li>
 <li><p>Execute any function on script load itself (w/o dependencies tree). Just write in <code>title</code> of any DOM node:</p>
 <p><code>&lt;div id="jquery" class="yass-module-jquery" title="$('jquery').html('jQuery is loaded via YASS')"&gt;&lt;/div&gt;</code></p>
 <p>So right after the script <code>yass.jquery.js</code> will be loaded and initialized <code>title</code> will be executed.</p></li>

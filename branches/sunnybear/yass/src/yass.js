@@ -663,12 +663,7 @@ _.load = function (aliases, text) {
 we can define several modules for 1 component:
 yass-module-item1-item2-item3
 */
-	if (aliases.indexOf('/') == -1) {
-		aliases = aliases.split("-");
-/* or just load any external script */
-	} else {
-		aliases = [aliases];
-	}
+	aliases = aliases.split("#");
 /* define base to load modules */
 	_.base = _.base || _('script[src*=yass.]')[0].src.replace(/yass[^\/]*\.js$/,"");
 	while (alias = aliases[idx++]) {

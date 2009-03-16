@@ -70,13 +70,13 @@
 
 <ul>
 <li><p>Вызвать какое-то действие по загрузке всего дерева зависимостей для данного модуля. Зависимости записываются в классе произвольного узла DOM-дерева, например:</p>
-<p><code>&lt;div class="yass-module-base-jquery"&gt;&lt;/div&gt;</code></p>
+<p><code>&lt;div class="yass-module-base#jquery"&gt;&lt;/div&gt;</code></p>
 <p>В этом случае модуль <code>jquery</code> зависит от модуля <code>base</code>, и окончательное событие <code>load</code> не будет вызвано, пока вся цепочка зависимостей не загрузится полностью.</p>
 <p>Задать логику обработчика события загрузки модуля можно через <code>init</code>:</p>
 <p><code>_.modules[modules_name]['init'] = function(){...}</code></p>
 <p>Для модуля <code>base</code> искомый код будет выглядеть (в конце файла <code>yass.base.js</code>):</p>
 <p><code>_.modules['base']['init'] = function(){...}</code></p></li>
-<li><p>Динамически сформировать дерево зависимостей в процессе загрузке. Для этого в конце загружаемого модуля достаточно вызвать <code>_.init(module_dependency + '-' + module_name)</code>, где <code>module_dependency</code> &mdash; модуль, от которого зависит загруженный. Тогда событие <code>load</code> не будет вызвано, пока не загрузится этот новый модуль.</p></li>
+<li><p>Динамически сформировать дерево зависимостей в процессе загрузке. Для этого в конце загружаемого модуля достаточно вызвать <code>_.init(module_dependency + '#' + module_name)</code>, где <code>module_dependency</code> &mdash; модуль, от которого зависит загруженный. Тогда событие <code>load</code> не будет вызвано, пока не загрузится этот новый модуль.</p></li>
 <li><p>Вызвать любой обработчик сразу после загрузки самого JS-файла (в обход любых зависимостей). Для этого нужно записать в <code>title</code> искомого DOM-узла:</p>
 <p><code>&lt;div id="jquery" class="yass-module-jquery" title="$('jquery').html('jQuery загружена через YASS')"&gt;&lt;/div&gt;</code></p>
 <p>Сразу после загрузки и инициализации <code>yass.jquery.js</code> будет вызван код, заключенный в атрибуте <code>title</code>.</p></li>
