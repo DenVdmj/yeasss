@@ -4,11 +4,11 @@
 * JSX 1.1 - Multi-events and components loading library
 *
 * Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
-* 2007-2009 Andrew Sumin (jsx.ru)
+* 2007 Andrew Sumin (jsx.ru)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:58:30 +3000 (Mon, 02 Feb 2009) $
+* $Date: 2009-02-23 12:58:30 +3000 (Mon, 23 Feb 2009) $
 * $Rev: 368 $
 */
 /**
@@ -604,6 +604,8 @@ _.modules = {'yass':[]};
 _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
 		if (!(tries%100) && _.modules[alias].status < 2) {
+/* remove old (not loaded) module, thx to akira */
+			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
 			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
@@ -650,7 +652,7 @@ _.load = function (aliases, text) {
 			case 1:
 				setTimeout(function () {
 					loader(alias, text, --tries, aliases)
-				}, 10);
+				}, 100);
 				break;
 		}
 	},
