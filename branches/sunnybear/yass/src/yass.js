@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:58:30 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 368 $
+* $Date: 2009-03-17 00:06:32 +3000 (Tue, 17 Mar 2009) $
+* $Rev: 370 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -663,7 +663,12 @@ _.load = function (aliases, text) {
 we can define several modules for 1 component:
 yass-module-item1-item2-item3
 */
-	aliases = aliases.split("-");
+	if (aliases.indexOf('/') == -1) {
+		aliases = aliases.split("-");
+/* or just load any external script */
+	} else {
+		aliases = [aliases];
+	}
 /* define base to load modules */
 	_.base = _.base || _('script[src*=yass.]')[0].src.replace(/yass[^\/]*\.js$/,"");
 	while (alias = aliases[idx++]) {
