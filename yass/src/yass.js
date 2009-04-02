@@ -8,8 +8,13 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
+<<<<<<< .working
 * $Date: 2009-02-23 12:58:30 +3000 (Mon, 23 Feb 2009) $
 * $Rev: 368 $
+=======
+* $Date: 2009-03-17 00:06:32 +3000 (Tue, 17 Mar 2009) $
+* $Rev: 370 $
+>>>>>>> .merge-right.r162
 */
 /**
  * Returns number of nodes or an empty array
@@ -604,8 +609,13 @@ _.modules = {'yass':[]};
 _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
 		if (!(tries%100) && _.modules[alias].status < 2) {
+<<<<<<< .working
 /* remove old (not loaded) module, thx to akira */
 			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
+=======
+/* remove old (not loaded) module, thx to akira */
+			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
+>>>>>>> .merge-right.r162
 			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
@@ -663,7 +673,7 @@ _.load = function (aliases, text) {
 we can define several modules for 1 component:
 yass-module-item1-item2-item3
 */
-	aliases = aliases.split("-");
+	aliases = aliases.split("#");
 /* define base to load modules */
 	_.base = _.base || _('script[src*=yass.]')[0].src.replace(/yass[^\/]*\.js$/,"");
 	while (alias = aliases[idx++]) {
