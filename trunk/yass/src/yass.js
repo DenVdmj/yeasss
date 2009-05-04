@@ -529,7 +529,7 @@ _.browser = {
 	mozilla: _.ua.indexOf('mozilla') != -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') == -2)
 };
 /* cached check for querySelectorAll. Disable all IE due to lask of support */
-_.q = !!_.doc.querySelectorAll && !_.browser.ie;
+_.q = !!_.doc.querySelectorAll && !_.browser.ie && !_.browser.opera;
 /*
 Mozilla, Opera (see further below for it) and webkit nightlies
 currently support this event
@@ -605,7 +605,7 @@ _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
 		if (!(tries%100) && _.modules[alias].status < 2) {
 /* remove old (not loaded) module, thx to akira */
-			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
+			_('head')[0].removeChild(_('script[title=' + alias + ']')[0]);
 			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
