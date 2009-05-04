@@ -8,13 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-<<<<<<< .working
-* $Date: 2009-02-23 12:58:30 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 368 $
-=======
-* $Date: 2009-03-17 00:06:32 +3000 (Tue, 17 Mar 2009) $
-* $Rev: 370 $
->>>>>>> .merge-right.r162
+* $Date: 2009-05-04 12:26:33 +3000 (Mon, 04 May 2009) $
+* $Rev: 371 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -524,8 +519,6 @@ _.bind = function (element, event, fn) {
 }
 /* browser sniffing */
 _.ua = navigator.userAgent.toLowerCase();
-/* cached check for querySelectorAll */
-_.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
 _.k = !!_.doc.getElementsByClassName;
 /* code for DOM ready and browsers detection taken from jQuery */
@@ -535,6 +528,8 @@ _.browser = {
 	ie: _.ua.indexOf('msie') != -1 && _.ua.indexOf('opera') == -1,
 	mozilla: _.ua.indexOf('mozilla') != -1 && (_.ua.indexOf('compatible') + _.ua.indexOf('webkit') == -2)
 };
+/* cached check for querySelectorAll. Disable all IE due to lask of support */
+_.q = !!_.doc.querySelectorAll && !_.browser.ie;
 /*
 Mozilla, Opera (see further below for it) and webkit nightlies
 currently support this event
