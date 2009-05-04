@@ -604,13 +604,8 @@ _.modules = {'yass':[]};
 _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
 		if (!(tries%100) && _.modules[alias].status < 2) {
-<<<<<<< .working
 /* remove old (not loaded) module, thx to akira */
 			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
-=======
-/* remove old (not loaded) module, thx to akira */
-			$('head')[0].removeChild($('script[title=' + alias + ']')[0]);
->>>>>>> .merge-right.r162
 			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
