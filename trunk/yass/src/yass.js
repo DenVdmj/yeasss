@@ -112,7 +112,8 @@ all other cases. Apply querySelector if exists.
 All methods are called via . not [] - thx to arty
 */
 		if (_.q && selector.indexOf('!=') == -1) {
-			sets = root.querySelectorAll(selector);
+/* replace not quoted args with quoted one -- Safari doesn't understand either */
+			sets = root.querySelectorAll(selector.replace(/=([^\]]+)/, '="$1"'));
 /* generic function for complicated selectors */
 		} else {
 /* number of groups to merge or not result arrays */
