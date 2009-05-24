@@ -49,7 +49,7 @@ workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.browser.ie && sets.id !== idx) {
+				if (_.browser.ie && (!sets || sets.id !== idx)) {
 					sets = _.doc.all[idx];
 				}
 				sets = sets ? [sets] : [];
