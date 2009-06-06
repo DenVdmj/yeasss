@@ -25,7 +25,7 @@
 						if (!/:(hover|active|link|visited|:)/i.test(text)) {
 							text = text.substring(0, text.indexOf('{'));
 /* very strange WebKit bug on nth-child(even) -> nth-child( */
-							text = text.substring(0, text.indexOf('('));
+							text = text.replace(/\($/, '(even)');
 							text = text.split(',');
 							k = 0;
 							while (selector = text[k++]) {
