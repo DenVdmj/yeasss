@@ -23,16 +23,14 @@
 					while (rule = rules[j++]) {
 						text = rule.cssText;
 						if (!/:(hover|active|link|visited|:)/i.test(text)) {
-							if (text.match(/nth/)) {
-								alert(text);
-								text = text.substring(0, text.indexOf('{'));
-								alert(text);
-								text = text.split(',');
-								k = 0;
-								while (selector = text[k++]) {
-									if (!_(selector.replace(/(^\s+|\s+$)/,""))[0]) {
-										log[log.length] = selector;
-									}
+							text = text.substring(0, text.indexOf('{'));
+/* very strange WebKit bug on nth-child(even) -> nth-child( */
+							text = text.substring(0, text.indexOf('('));
+							text = text.split(',');
+							k = 0;
+							while (selector = text[k++]) {
+								if (!_(selector.replace(/(^\s+|\s+$)/,""))[0]) {
+									log[log.length] = selector;
 								}
 							}
 						}
