@@ -26,6 +26,7 @@
 						text = text.split(',');
 						k = 0;
 						while (selector = text[k++]) {
+							alert(selector);
 							if (!_(selector.replace(/(^\s+|\s+$)/,""))[0]) {
 								log[log.length] = selector;
 							}
