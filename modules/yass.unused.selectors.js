@@ -22,13 +22,18 @@
 					rules = sheet.cssRules;
 					while (rule = rules[j++]) {
 						text = rule.cssText;
-						text = text.substring(0, text.indexOf('{'));
-						text = text.split(',');
-						k = 0;
-						while (selector = text[k++]) {
-							alert(selector);
-							if (!_(selector.replace(/(^\s+|\s+$)/,""))[0]) {
-								log[log.length] = selector;
+						if (!/:(hover|active|link|visited|:)/i.test(text)) {
+							if (text.match(/nth/)) {
+								alert(text);
+								text = text.substring(0, text.indexOf('{'));
+								alert(text);
+								text = text.split(',');
+								k = 0;
+								while (selector = text[k++]) {
+									if (!_(selector.replace(/(^\s+|\s+$)/,""))[0]) {
+										log[log.length] = selector;
+									}
+								}
 							}
 						}
 					}
