@@ -606,7 +606,9 @@ _.load = function (aliases, text) {
 	var loader = function (alias, text, tries, aliases) {
 		if (!(tries%100) && _.modules[alias].status < 2) {
 /* remove old (not loaded) module, thx to akira */
-			_('head')[0].removeChild(_('script[title=' + alias + ']')[0]);
+			if (var node = _('script[title=' + alias + ']')[0]) {
+				_('head')[0].removeChild(node);
+			}
 			_.modules[alias].status = 0;
 			if (!(tries -= 1000)) {
 /* can't load module */
