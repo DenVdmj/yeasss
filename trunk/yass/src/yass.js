@@ -191,7 +191,7 @@ and length of root nodes
 /* loop in all root nodes */
 							while (child = nodes[J++]) {
 /*
-find all TAGs or just return all possible neibours.
+find all TAGs or just return all possible neighbours.
 Find correct 'children' for given node. They can be
 direct childs, neighbours or something else.
 */
@@ -287,7 +287,7 @@ Then mark selected element with expando
 			idx = sets.length;
 /*
 Need this looping as far as we also have expando 'yeasss'
-that must be nulled. Need this only to generic case
+that must be nulled. Need this only for generic case
 */
 			while (idx--) {
 				sets[idx].yeasss = sets[idx].nodeIndex = sets[idx].nodeIndexLast = null;
