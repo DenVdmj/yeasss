@@ -1,6 +1,6 @@
 (function(){
 /*
-* YASS 0.3.8 - The fastest CSS selectors JavaScript library
+* YASS 0.3.9 - The fastest CSS selectors JavaScript library
 * JSX 1.1 - Multi-events and components loading library
 *
 * Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
@@ -8,8 +8,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-05-04 12:26:33 +3000 (Mon, 04 May 2009) $
-* $Rev: 371 $
+* $Date: 2009-11-09 03:12:34 +3000 (Mon, 09 Nov 2009) $
+* $Rev: 372 $
 */
 /**
  * Returns number of nodes or an empty array
