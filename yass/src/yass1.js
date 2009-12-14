@@ -34,7 +34,7 @@ workaround with IE bug about returning element by name not by ID.
 Solution completely changed, thx to deerua.
 Get all matching elements with this id
 */
-				if (_.doc.all && sets.id !== id) {
+				if (_.doc.all && (!sets || sets.id !== id)) {
 					sets = _.doc.all[id];
 				}
 				sets = sets ? [sets] : [];
