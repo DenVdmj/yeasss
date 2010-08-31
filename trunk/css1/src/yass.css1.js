@@ -5,12 +5,12 @@
 * Faster only by 20-30% than YASS 0.4.0
 * Slower than native methods by 100-300%
 *
-* Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
+* Copyright (c) 2008-2010 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-02 18:58:30 +3000 (Mon, 02 Feb 2009) $
-* $Rev: 17 $
+* $Date: 2010-08-31 20:42:03 +3000 (Tue, 31 Aug 2010) $
+* $Rev: 18 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -219,7 +219,7 @@ _.doc = document;
 /* cached check for querySelectorAll */
 _.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
-_.k = !!_.doc.getElementsByClassName;
+_.k = !!_.doc.documentElement.getElementsByClassName;
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
