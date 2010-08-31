@@ -3,13 +3,13 @@
 * YASS 0.3.9 - The fastest CSS selectors JavaScript library
 * JSX 1.1 - Multi-events and components loading library
 *
-* Copyright (c) 2008-2009 Nikolay Matsievsky aka sunnybear (webo.in),
+* Copyright (c) 2008-2010 Nikolay Matsievsky aka sunnybear (webo.in),
 * 2007 Andrew Sumin (jsx.ru)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-11-09 03:12:34 +3000 (Mon, 09 Nov 2009) $
-* $Rev: 372 $
+* $Date: 2010-08-31 20:42:03 +3000 (Tue, 31 Aug 2010) $
+* $Rev: 373 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -521,7 +521,7 @@ _.bind = function (element, event, fn) {
 /* browser sniffing */
 _.ua = navigator.userAgent.toLowerCase();
 /* cached check for getElementsByClassName */
-_.k = !!_.doc.getElementsByClassName;
+_.k = !!_.doc.documentElement.getElementsByClassName;
 /* code for DOM ready and browsers detection taken from jQuery */
 _.browser = {
 	safari: _.ua.indexOf('webkit') != -1,

@@ -7,8 +7,8 @@
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2009-02-23 12:59:31 +3000 (Mon, 23 Feb 2009) $
-* $Rev: 22 $
+* $Date: 2010-08-31 20:42:03 +3000 (Tue, 31 Aug 2010) $
+* $Rev: 23 $
 */
 /**
  * Returns number of nodes or an empty array
@@ -475,7 +475,7 @@ _.ua = navigator.userAgent.toLowerCase();
 /* cached check for querySelectorAll */
 _.q = !!_.doc.querySelectorAll;
 /* cached check for getElementsByClassName */
-_.k = !!_.doc.getElementsByClassName;
+_.k = !!_.doc.documentElement.getElementsByClassName;
 /* code for DOM ready and browsers detection taken from jQuery */
 _.browser = {
 	safari: _.ua.indexOf('webkit') != -1,

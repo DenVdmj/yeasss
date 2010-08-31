@@ -5,12 +5,12 @@
 * Faster only by 20-30% than YASS 0.3.4
 * Slower than native methods by 100-300%
 *
-* Copyright (c) 2008 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
+* Copyright (c) 2008-2010 Nikolay Matsievsky aka sunnybear (webo.in, webo.name)
 * Dual licensed under the MIT (MIT-LICENSE.txt)
 * and GPL (GPL-LICENSE.txt) licenses.
 *
-* $Date: 2008-01-11 01:31:03 +3000 (Sun, 11 Jan 2009) $
-* $Rev: 6 $
+* $Date: 2010-08-31 20:42:03 +3000 (Tue, 31 Aug 2010) $
+* $Rev: 7 $
 */
 /* given CSS selector is the first argument, fast trim eats about 0.2ms */
 var _ = function (selector, root) {
@@ -42,7 +42,7 @@ Get all matching elements with this id
 			case '.':
 				var klass = selector.slice(1),
 					idx = 0;
-				if (_.doc.getElementsByClassName) {
+				if (_.ddoc.getElementsByClassName) {
 					sets = (idx = (sets = root.getElementsByClassName(klass)).length) ? sets : [];
 				} else {
 					klass = new RegExp('(^| +)' + klass + '($| +)');
@@ -176,6 +176,8 @@ that must be nulled. Need this only to generic case
 };
 /* caching global document */
 _.doc = document;
+/* caching main root */
+_.ddoc = document.documentElement;
 /* initialization as a global var */
 window.yass = _;
 /* do not override existing window._ */
